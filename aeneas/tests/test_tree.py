@@ -1,9 +1,30 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import unittest
 
 from aeneas.tree import Tree
+
 
 class TestTree(unittest.TestCase):
 
@@ -298,10 +319,40 @@ class TestTree(unittest.TestCase):
             (root, c1, c11, c12, c13, c2, c21, c22, c23, c231, c232, c24, c25, c3, c4) = self.create_tree2()
             self.keep(root, levels)
 
+    def test_clone(self):
+        (root, c1, c11, c111, c1111, c1112, c1113) = self.create_tree1()
+        copy_root = root.clone()
+        nodes = [n for n in root.dfs]
+        copy_nodes = [n for n in copy_root.dfs]
+        self.assertEqual(len(nodes), len(copy_nodes))
+        for i in range(len(nodes)):
+            self.assertEqual(nodes[i].value, copy_nodes[i].value)
+
+    def test_clone_and_edit(self):
+        (root, c1, c11, c111, c1111, c1112, c1113) = self.create_tree1()
+        copy_root = root.clone()
+        copy_root.get_child(0).value = "n1"
+        self.assertEqual(copy_root.get_child(0).value, "n1")
+        self.assertEqual(root.get_child(0).value, "c1")
+
+    def test_remove(self):
+        (root, c1, c11, c111, c1111, c1112, c1113) = self.create_tree1()
+        self.assertEqual(len(c111.children), 3)
+        c1113.remove()
+        self.assertEqual(len(c111.children), 2)
+        c1112.remove()
+        self.assertEqual(len(c111.children), 1)
+        c1111.remove()
+        self.assertEqual(len(c111.children), 0)
+
+    def test_remove_dangling(self):
+        (root, c1, c11, c111, c1111, c1112, c1113) = self.create_tree1()
+        self.assertEqual(len(list(root.dfs)), 7)
+        self.assertEqual(len(list(c1.dfs)), 6)
+        c1.remove()
+        self.assertEqual(len(list(root.dfs)), 1)
+        self.assertEqual(len(list(c1.dfs)), 6)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-
-

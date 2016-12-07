@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import unittest
 
 from aeneas.idsortingalgorithm import IDSortingAlgorithm
@@ -14,6 +34,7 @@ from aeneas.textfile import TextFilterTransliterate
 import aeneas.globalconstants as gc
 import aeneas.globalfunctions as gf
 
+
 class TestTextFile(unittest.TestCase):
 
     NOT_EXISTING_PATH = gf.absolute_path("not_existing.txt", __file__)
@@ -21,22 +42,23 @@ class TestTextFile(unittest.TestCase):
     EMPTY_FILE_PATH = "res/inputtext/empty.txt"
     BLANK_FILE_PATH = "res/inputtext/blank.txt"
     PLAIN_FILE_PATH = "res/inputtext/sonnet_plain.txt"
+    PLAIN_WITH_EMPTY_LINES_FILE_PATH = "res/inputtext/plain_with_empty_lines.txt"
     PARSED_FILE_PATH = "res/inputtext/sonnet_parsed.txt"
     MPLAIN_FILE_PATH = "res/inputtext/sonnet_mplain.txt"
     MUNPARSED_FILE_PATH = "res/inputtext/sonnet_munparsed.xhtml"
     UNPARSED_PARAMETERS = {
-        gc.PPN_TASK_IS_TEXT_MUNPARSED_L1_ID_REGEX : "p[0-9]+",
-        gc.PPN_TASK_IS_TEXT_MUNPARSED_L2_ID_REGEX : "p[0-9]+s[0-9]+",
-        gc.PPN_TASK_IS_TEXT_MUNPARSED_L3_ID_REGEX : "p[0-9]+s[0-9]+w[0-9]+",
-        gc.PPN_TASK_IS_TEXT_UNPARSED_ID_REGEX : "f[0-9]+",
-        gc.PPN_TASK_IS_TEXT_UNPARSED_CLASS_REGEX : "ra",
-        gc.PPN_TASK_IS_TEXT_UNPARSED_ID_SORT : IDSortingAlgorithm.UNSORTED,
+        gc.PPN_TASK_IS_TEXT_MUNPARSED_L1_ID_REGEX: "p[0-9]+",
+        gc.PPN_TASK_IS_TEXT_MUNPARSED_L2_ID_REGEX: "p[0-9]+s[0-9]+",
+        gc.PPN_TASK_IS_TEXT_MUNPARSED_L3_ID_REGEX: "p[0-9]+s[0-9]+w[0-9]+",
+        gc.PPN_TASK_IS_TEXT_UNPARSED_ID_REGEX: "f[0-9]+",
+        gc.PPN_TASK_IS_TEXT_UNPARSED_CLASS_REGEX: "ra",
+        gc.PPN_TASK_IS_TEXT_UNPARSED_ID_SORT: IDSortingAlgorithm.UNSORTED,
     }
     ID_REGEX_PARAMETERS = {
-        gc.PPN_TASK_OS_FILE_ID_REGEX : u"word%06d"
+        gc.PPN_TASK_OS_FILE_ID_REGEX: u"word%06d"
     }
     ID_REGEX_PARAMETERS_BAD = {
-        gc.PPN_TASK_OS_FILE_ID_REGEX : u"word"
+        gc.PPN_TASK_OS_FILE_ID_REGEX: u"word"
     }
     TRANSLITERATION_MAP_FILE_PATH = gf.absolute_path("res/transliteration/transliteration.map", __file__)
 
@@ -144,6 +166,9 @@ class TestTextFile(unittest.TestCase):
         for fmt in TextFileFormat.ALLOWED_VALUES:
             self.load(self.EMPTY_FILE_PATH, fmt, 0, self.UNPARSED_PARAMETERS)
 
+    def test_read_plain_with_empty_lines(self):
+        self.load(self.PLAIN_WITH_EMPTY_LINES_FILE_PATH, TextFileFormat.PLAIN, 19, None)
+
     def test_read_blank(self):
         for fmt in TextFileFormat.ALLOWED_VALUES:
             expected = 0
@@ -196,34 +221,34 @@ class TestTextFile(unittest.TestCase):
 
     def test_read_munparsed_diff_id(self):
         parameters = {
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L1_ID_REGEX : "p[0-9]+",
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L2_ID_REGEX : "s[0-9]+",
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L3_ID_REGEX : "w[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L1_ID_REGEX: "p[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L2_ID_REGEX: "s[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L3_ID_REGEX: "w[0-9]+",
         }
         tfl = self.load("res/inputtext/sonnet_munparsed_diff_id.xhtml", TextFileFormat.MUNPARSED, 5, parameters)
         self.assertEqual(len(tfl.fragments_tree.vleaves), 107)
 
     def test_read_munparsed_bad_param_l1(self):
         parameters = {
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L1_ID_REGEX : "k[0-9]+",
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L2_ID_REGEX : "s[0-9]+",
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L3_ID_REGEX : "w[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L1_ID_REGEX: "k[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L2_ID_REGEX: "s[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L3_ID_REGEX: "w[0-9]+",
         }
         tfl = self.load("res/inputtext/sonnet_munparsed_diff_id.xhtml", TextFileFormat.MUNPARSED, 0, parameters)
 
     def test_read_munparsed_bad_param_l2(self):
         parameters = {
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L1_ID_REGEX : "p[0-9]+",
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L2_ID_REGEX : "k[0-9]+",
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L3_ID_REGEX : "w[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L1_ID_REGEX: "p[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L2_ID_REGEX: "k[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L3_ID_REGEX: "w[0-9]+",
         }
         tfl = self.load("res/inputtext/sonnet_munparsed_diff_id.xhtml", TextFileFormat.MUNPARSED, 0, parameters)
 
     def test_read_munparsed_bad_param_l3(self):
         parameters = {
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L1_ID_REGEX : "p[0-9]+",
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L2_ID_REGEX : "s[0-9]+",
-            gc.PPN_TASK_IS_TEXT_MUNPARSED_L3_ID_REGEX : "k[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L1_ID_REGEX: "p[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L2_ID_REGEX: "s[0-9]+",
+            gc.PPN_TASK_IS_TEXT_MUNPARSED_L3_ID_REGEX: "k[0-9]+",
         }
         tfl = self.load("res/inputtext/sonnet_munparsed_diff_id.xhtml", TextFileFormat.MUNPARSED, 0, parameters)
 
@@ -263,26 +288,26 @@ class TestTextFile(unittest.TestCase):
                 {
                     "path": "res/inputtext/sonnet_unparsed_soup_1.txt",
                     "parameters": {
-                        gc.PPN_TASK_IS_TEXT_UNPARSED_ID_REGEX : "f[0-9]*"
+                        gc.PPN_TASK_IS_TEXT_UNPARSED_ID_REGEX: "f[0-9]*"
                     }
                 },
                 {
                     "path": "res/inputtext/sonnet_unparsed_soup_2.txt",
                     "parameters": {
-                        gc.PPN_TASK_IS_TEXT_UNPARSED_ID_REGEX : "f[0-9]*",
-                        gc.PPN_TASK_IS_TEXT_UNPARSED_CLASS_REGEX : "ra"
+                        gc.PPN_TASK_IS_TEXT_UNPARSED_ID_REGEX: "f[0-9]*",
+                        gc.PPN_TASK_IS_TEXT_UNPARSED_CLASS_REGEX: "ra"
                     }
                 },
                 {
                     "path": "res/inputtext/sonnet_unparsed_soup_3.txt",
                     "parameters": {
-                        gc.PPN_TASK_IS_TEXT_UNPARSED_CLASS_REGEX : "ra"
+                        gc.PPN_TASK_IS_TEXT_UNPARSED_CLASS_REGEX: "ra"
                     }
                 },
                 {
                     "path": "res/inputtext/sonnet_unparsed.xhtml",
                     "parameters": {
-                        gc.PPN_TASK_IS_TEXT_UNPARSED_ID_REGEX : "f[0-9]*"
+                        gc.PPN_TASK_IS_TEXT_UNPARSED_ID_REGEX: "f[0-9]*"
                     }
                 },
         ]:
@@ -524,17 +549,17 @@ class TestTextFile(unittest.TestCase):
         self.filter_transliterate([u"TUTTE"], [u"wwwwE"])
 
     def test_filter_transliterate_replace_codepoint_length(self):
-        self.filter_transliterate([u"x" + u"\u0008" + u"z"], [u"xaz"])
-        self.filter_transliterate([u"x" + u"\u0088" + u"z"], [u"xaz"])
-        self.filter_transliterate([u"x" + u"\u0888" + u"z"], [u"xaz"])
-        self.filter_transliterate([u"x" + u"\u8888" + u"z"], [u"xaz"])
-        self.filter_transliterate([u"x" + u"\U00088888" + u"z"], [u"xaz"])
-        self.filter_transliterate([u"x" + u"\U00108888" + u"z"], [u"xaz"])
+        self.filter_transliterate([u"x" + gf.safe_unichr(0x0008) + u"z"], [u"xaz"])
+        self.filter_transliterate([u"x" + gf.safe_unichr(0x0088) + u"z"], [u"xaz"])
+        self.filter_transliterate([u"x" + gf.safe_unichr(0x0888) + u"z"], [u"xaz"])
+        self.filter_transliterate([u"x" + gf.safe_unichr(0x8888) + u"z"], [u"xaz"])
+        if gf.is_py2_narrow_build():
+            # NOTE Python 2 narrow builds cannot handle codepoints above 0x10000 correctly
+            pass
+        else:
+            self.filter_transliterate([u"x" + gf.safe_unichr(0x88888) + u"z"], [u"xaz"])
+            self.filter_transliterate([u"x" + gf.safe_unichr(0x108888) + u"z"], [u"xaz"])
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-
-

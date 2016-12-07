@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 Extract a list of speech intervals from the given audio file,
 using the MFCC energy-based VAD algorithm.
@@ -19,16 +39,6 @@ from aeneas.runtimeconfiguration import RuntimeConfiguration
 from aeneas.tools.abstract_cli_program import AbstractCLIProgram
 import aeneas.globalfunctions as gf
 
-__author__ = "Alberto Pettarin"
-__copyright__ = """
-    Copyright 2012-2013, Alberto Pettarin (www.albertopettarin.it)
-    Copyright 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-    Copyright 2015-2016, Alberto Pettarin (www.albertopettarin.it)
-    """
-__license__ = "GNU AGPL 3"
-__version__ = "1.5.1"
-__email__ = "aeneas@readbeyond.it"
-__status__ = "Production"
 
 class RunVADCLI(AbstractCLIProgram):
     """
@@ -105,19 +115,34 @@ class RunVADCLI(AbstractCLIProgram):
         speech = audio_file_mfcc.intervals(speech=True, time=output_time)
         nonspeech = audio_file_mfcc.intervals(speech=False, time=output_time)
         if mode == u"speech":
-            intervals = speech
+            if output_time:
+                intervals = [(i.begin, i.end) for i in speech]
+                template = u"%.3f\t%.3f"
+            else:
+                intervals = speech
+                template = u"%d\t%d"
         elif mode == u"nonspeech":
-            intervals = nonspeech
+            if output_time:
+                intervals = [(i.begin, i.end) for i in nonspeech]
+                template = u"%.3f\t%.3f"
+            else:
+                intervals = nonspeech
+                template = u"%d\t%d"
         elif mode == u"both":
-            speech = [[x[0], x[1], u"speech"] for x in speech]
-            nonspeech = [[x[0], x[1], u"nonspeech"] for x in nonspeech]
+            if output_time:
+                speech = [(i.begin, i.end, u"speech") for i in speech]
+                nonspeech = [(i.begin, i.end, u"nonspeech") for i in nonspeech]
+                template = u"%.3f\t%.3f\t%s"
+            else:
+                speech = [(i[0], i[1], u"speech") for i in speech]
+                nonspeech = [(i[0], i[1], u"nonspeech") for i in nonspeech]
+                template = u"%d\t%d\t%s"
             intervals = sorted(speech + nonspeech)
-        intervals = [tuple(interval) for interval in intervals]
-        self.write_to_file(output_file_path, intervals, output_time)
+        self.write_to_file(output_file_path, intervals, template)
 
         return self.NO_ERROR_EXIT_CODE
 
-    def write_to_file(self, output_file_path, intervals, time):
+    def write_to_file(self, output_file_path, intervals, template):
         """
         Write intervals to file.
 
@@ -127,13 +152,7 @@ class RunVADCLI(AbstractCLIProgram):
         :param intervals: a list of tuples, each representing an interval
         :type  intervals: list of tuples
         """
-        msg = []
-        if len(intervals) > 0:
-            if len(intervals[0]) == 2:
-                template = u"%.3f\t%.3f" if time else u"%d\t%d"
-            else:
-                template = u"%.3f\t%.3f\t%s" if time else u"%d\t%d\t%s"
-            msg = [template % (interval) for interval in intervals]
+        msg = [template % (interval) for interval in intervals]
         if output_file_path is None:
             self.print_info(u"Intervals detected:")
             for line in msg:
@@ -144,7 +163,6 @@ class RunVADCLI(AbstractCLIProgram):
                 self.print_success(u"Created file '%s'" % output_file_path)
 
 
-
 def main():
     """
     Execute program.
@@ -153,6 +171,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-

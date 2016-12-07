@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module contains the following classes:
 
@@ -26,16 +46,6 @@ from aeneas.textfile import TextFileFormat
 import aeneas.globalconstants as gc
 import aeneas.globalfunctions as gf
 
-__author__ = "Alberto Pettarin"
-__copyright__ = """
-    Copyright 2012-2013, Alberto Pettarin (www.albertopettarin.it)
-    Copyright 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-    Copyright 2015-2016, Alberto Pettarin (www.albertopettarin.it)
-    """
-__license__ = "GNU AGPL v3"
-__version__ = "1.5.1"
-__email__ = "aeneas@readbeyond.it"
-__status__ = "Production"
 
 class Validator(Loggable):
     """
@@ -50,14 +60,14 @@ class Validator(Loggable):
     ALLOWED_VALUES = [
         #
         # NOTE disabling the check on language since now we support multiple TTS
-        #(
-        #    gc.PPN_JOB_LANGUAGE,
-        #    Language.ALLOWED_VALUES
-        #),
-        #(
-        #    gc.PPN_TASK_LANGUAGE,
-        #    Language.ALLOWED_VALUES
-        #),
+        # COMMENTED (
+        # COMMENTED    gc.PPN_JOB_LANGUAGE,
+        # COMMENTED    Language.ALLOWED_VALUES
+        # COMMENTED ),
+        # COMMENTED (
+        # COMMENTED     gc.PPN_TASK_LANGUAGE,
+        # COMMENTED     Language.ALLOWED_VALUES
+        # COMMENTED ),
         #
         (
             gc.PPN_JOB_IS_HIERARCHY_TYPE,
@@ -255,6 +265,8 @@ class Validator(Loggable):
         """
         self.log([u"Checking encoding of file '%s'", input_file_path])
         self.result = ValidatorResult()
+        if self._are_safety_checks_disabled(u"check_file_encoding"):
+            return self.result
         if not gf.file_can_be_read(input_file_path):
             self._failed(u"File '%s' cannot be read." % (input_file_path))
             return self.result
@@ -276,6 +288,8 @@ class Validator(Loggable):
         """
         self.log(u"Checking the given byte string")
         self.result = ValidatorResult()
+        if self._are_safety_checks_disabled(u"check_raw_string"):
+            return self.result
         if is_bstring:
             self._check_utf8_encoding(string)
             if not self.result.passed:
@@ -310,6 +324,8 @@ class Validator(Loggable):
         else:
             self.log(u"Checking task configuration string")
         self.result = ValidatorResult()
+        if self._are_safety_checks_disabled(u"check_configuration_string"):
+            return self.result
         if is_job:
             required_parameters = self.JOB_REQUIRED_PARAMETERS
         elif external_name:
@@ -342,6 +358,8 @@ class Validator(Loggable):
         """
         self.log(u"Checking contents TXT config file")
         self.result = ValidatorResult()
+        if self._are_safety_checks_disabled(u"check_config_txt"):
+            return self.result
         is_bstring = gf.is_bytes(contents)
         if is_bstring:
             self.log(u"Checking that contents is well formed")
@@ -370,6 +388,8 @@ class Validator(Loggable):
         """
         self.log(u"Checking contents XML config file")
         self.result = ValidatorResult()
+        if self._are_safety_checks_disabled(u"check_config_xml"):
+            return self.result
         contents = gf.safe_bytes(contents)
         self.log(u"Checking that contents is well formed")
         self.check_raw_string(contents, is_bstring=True)
@@ -401,6 +421,9 @@ class Validator(Loggable):
         """
         self.log([u"Checking container '%s'", container_path])
         self.result = ValidatorResult()
+
+        if self._are_safety_checks_disabled(u"check_container"):
+            return self.result
 
         if not (gf.file_exists(container_path) or gf.directory_exists(container_path)):
             self._failed(u"Container '%s' not found." % container_path)
@@ -443,6 +466,18 @@ class Validator(Loggable):
         except OSError:
             self._failed(u"Unable to read the contents of the container.")
         return self.result
+
+    def _are_safety_checks_disabled(self, caller=u"unknown_function"):
+        """
+        Return ``True`` if safety checks are disabled.
+
+        :param string caller: the name of the caller function
+        :rtype: bool
+        """
+        if self.rconf.safety_checks:
+            return False
+        self.log_warn([u"Safety checks disabled => %s passed", caller])
+        return True
 
     def _failed(self, msg):
         """
@@ -533,7 +568,7 @@ class Validator(Loggable):
             self,
             required_parameters,
             parameters
-        ):
+    ):
         """
         Check whether the given parameter dictionary contains
         all the required paramenters.
@@ -610,7 +645,6 @@ class Validator(Loggable):
         self.log(u"Checking each Task text file is well formed: passed")
 
 
-
 class ValidatorResult(object):
     """
     A structure to contain the result of a validation.
@@ -663,6 +697,7 @@ class ValidatorResult(object):
         :rtype: bool
         """
         return self.__passed
+
     @passed.setter
     def passed(self, passed):
         self.__passed = passed
@@ -675,6 +710,7 @@ class ValidatorResult(object):
         :rtype: list of strings
         """
         return self.__warnings
+
     @warnings.setter
     def warnings(self, warnings):
         self.__warnings = warnings
@@ -687,6 +723,7 @@ class ValidatorResult(object):
         :rtype: list of strings
         """
         return self.__errors
+
     @errors.setter
     def errors(self, errors):
         self.__errors = errors
@@ -706,6 +743,3 @@ class ValidatorResult(object):
         :param string message: the message to be added
         """
         self.errors.append(message)
-
-
-

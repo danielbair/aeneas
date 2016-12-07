@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 An "abstract" class containing functions common
 to the CLI programs in aeneas.tools.
@@ -11,6 +31,7 @@ from __future__ import print_function
 import os
 import sys
 
+from aeneas import __version__ as aeneas_version
 from aeneas.logger import Loggable
 from aeneas.logger import Logger
 from aeneas.runtimeconfiguration import RuntimeConfiguration
@@ -18,16 +39,6 @@ from aeneas.textfile import TextFile
 from aeneas.textfile import TextFileFormat
 import aeneas.globalfunctions as gf
 
-__author__ = "Alberto Pettarin"
-__copyright__ = """
-    Copyright 2012-2013, Alberto Pettarin (www.albertopettarin.it)
-    Copyright 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-    Copyright 2015-2016, Alberto Pettarin (www.albertopettarin.it)
-    """
-__license__ = "GNU AGPL 3"
-__version__ = "1.5.1"
-__email__ = "aeneas@readbeyond.it"
-__status__ = "Production"
 
 class AbstractCLIProgram(Loggable):
     """
@@ -71,6 +82,8 @@ class AbstractCLIProgram(Loggable):
         ]
     }
 
+    RCONF_PARAMETERS = RuntimeConfiguration.parameters(sort=True, as_strings=True)
+
     TAG = u"CLI"
 
     def __init__(self, use_sys=True, invoke=None, rconf=None, logger=None):
@@ -85,12 +98,12 @@ class AbstractCLIProgram(Loggable):
         self.very_verbose = False
 
     PREFIX_TO_PRINT_FUNCTION = {
-        Logger.CRITICAL : gf.print_error,
-        Logger.DEBUG : gf.print_info,
-        Logger.ERROR : gf.print_error,
-        Logger.INFO : gf.print_info,
-        Logger.SUCCESS : gf.print_success,
-        Logger.WARNING : gf.print_warning
+        Logger.CRITICAL: gf.print_error,
+        Logger.DEBUG: gf.print_info,
+        Logger.ERROR: gf.print_error,
+        Logger.INFO: gf.print_info,
+        Logger.SUCCESS: gf.print_success,
+        Logger.WARNING: gf.print_warning
     }
 
     def print_generic(self, msg, prefix=None):
@@ -173,7 +186,7 @@ class AbstractCLIProgram(Loggable):
 
         synopsis = [
             u"SYNOPSIS",
-            u"  %s [-h|--help|--version]" % (self.invoke)
+            u"  %s [-h|--help|--help-rconf|--version]" % (self.invoke),
         ]
         if "synopsis" in self.HELP:
             for syn, opt in self.HELP["synopsis"]:
@@ -188,6 +201,7 @@ class AbstractCLIProgram(Loggable):
         options = [
             u"  -h : print short help and exit",
             u"  --help : print full help and exit",
+            u"  --help-rconf : list all runtime configuration parameters",
             u"  --version : print the program name and version and exit",
             u"  -l[=FILE], --log[=FILE] : log verbose output to tmp file or FILE if specified",
             u"  -r=CONF, --runtime-configuration=CONF : apply runtime configuration CONF",
@@ -250,7 +264,16 @@ class AbstractCLIProgram(Loggable):
         :rtype: int
         """
         if self.use_sys:
-            self.print_generic(u"%s v%s" % (self.NAME, __version__))
+            self.print_generic(u"%s v%s" % (self.NAME, aeneas_version))
+        return self.exit(self.HELP_EXIT_CODE)
+
+    def print_rconf_parameters(self):
+        """
+        Print the list of runtime configuration parameters and exit.
+        """
+        if self.use_sys:
+            self.print_info(u"Available runtime configuration parameters:")
+            self.print_generic(u"\n" + u"\n".join(self.RCONF_PARAMETERS) + u"\n")
         return self.exit(self.HELP_EXIT_CODE)
 
     def run(self, arguments, show_help=True):
@@ -290,6 +313,9 @@ class AbstractCLIProgram(Loggable):
 
             if u"--help" in args:
                 return self.print_help(short=False)
+
+            if u"--help-rconf" in args:
+                return self.print_rconf_parameters()
 
             if u"--version" in args:
                 return self.print_name_version()
@@ -342,7 +368,7 @@ class AbstractCLIProgram(Loggable):
         self.logger = Logger(tee=self.verbose, tee_show_datetime=self.very_verbose)
         self.log([u"Formal arguments: %s", self.formal_arguments])
         self.log([u"Actual arguments: %s", self.actual_arguments])
-        self.log([u"Runtime configuration: '%s'", self.rconf.config_string()])
+        self.log([u"Runtime configuration: '%s'", self.rconf.config_string])
 
         # perform command
         exit_code = self.perform_command()
@@ -515,7 +541,6 @@ class AbstractCLIProgram(Loggable):
         self.print_error(u"$ sudo pip install youtube-dl pafy")
 
 
-
 def main():
     """
     Execute program.
@@ -524,6 +549,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-

@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module contains the following classes:
 
@@ -20,16 +40,6 @@ import sys
 
 import aeneas.globalfunctions as gf
 
-__author__ = "Alberto Pettarin"
-__copyright__ = """
-    Copyright 2012-2013, Alberto Pettarin (www.albertopettarin.it)
-    Copyright 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-    Copyright 2015-2016, Alberto Pettarin (www.albertopettarin.it)
-    """
-__license__ = "GNU AGPL v3"
-__version__ = "1.5.1"
-__email__ = "aeneas@readbeyond.it"
-__status__ = "Production"
 
 class Diagnostics(object):
     """
@@ -126,20 +136,17 @@ class Diagnostics(object):
         :rtype: bool
         """
         try:
-            from aeneas.espeakwrapper import ESPEAKWrapper
+            from aeneas.textfile import TextFile
+            from aeneas.textfile import TextFragment
+            from aeneas.ttswrappers.espeakttswrapper import ESPEAKTTSWrapper
             text = u"From fairest creatures we desire increase,"
-            language = u"eng"
+            text_file = TextFile()
+            text_file.add_fragment(TextFragment(language=u"eng", lines=[text], filtered_lines=[text]))
             handler, output_file_path = gf.tmp_file(suffix=u".wav")
-            espeak = ESPEAKWrapper()
-            result = espeak.synthesize_single(
-                text,
-                language,
-                output_file_path
-            )
+            ESPEAKTTSWrapper().synthesize_multiple(text_file, output_file_path)
             gf.delete_file(handler, output_file_path)
-            if result:
-                gf.print_success(u"espeak         OK")
-                return False
+            gf.print_success(u"espeak         OK")
+            return False
         except:
             pass
         gf.print_error(u"espeak         ERROR")
@@ -160,15 +167,15 @@ class Diagnostics(object):
         """
         try:
             from aeneas.tools.convert_syncmap import ConvertSyncMapCLI
-            # disabling this check, as it contains optional dependency pafy
-            #from aeneas.tools.download import DownloadCLI
+            # disabling this check, as it requires the optional dependency pafy
+            # COMMENTED from aeneas.tools.download import DownloadCLI
             from aeneas.tools.execute_job import ExecuteJobCLI
             from aeneas.tools.execute_task import ExecuteTaskCLI
             from aeneas.tools.extract_mfcc import ExtractMFCCCLI
             from aeneas.tools.ffmpeg_wrapper import FFMPEGWrapperCLI
             from aeneas.tools.ffprobe_wrapper import FFPROBEWrapperCLI
-            # disabling this check, as it contains optional dependency Pillow
-            #from aeneas.tools.plot_waveform import PlotWaveformCLI
+            # disabling this check, as it requires the optional dependency Pillow
+            # COMMENTED from aeneas.tools.plot_waveform import PlotWaveformCLI
             from aeneas.tools.read_audio import ReadAudioCLI
             from aeneas.tools.read_text import ReadTextCLI
             from aeneas.tools.run_sd import RunSDCLI
@@ -270,7 +277,6 @@ class Diagnostics(object):
         return (False, warnings, c_ext_warnings)
 
 
-
 def main():
     errors, warnings, c_ext_warnings = Diagnostics.check_all()
     if errors:
@@ -283,9 +289,5 @@ def main():
         sys.exit(0)
 
 
-
 if __name__ == '__main__':
     main()
-
-
-

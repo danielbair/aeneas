@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module contains the following classes:
 
@@ -19,24 +39,14 @@ import numpy
 
 from aeneas.audiofilemfcc import AudioFileMFCC
 from aeneas.dtw import DTWAligner
+from aeneas.exacttiming import Decimal
+from aeneas.exacttiming import InvalidOperation
+from aeneas.exacttiming import TimeValue
 from aeneas.logger import Loggable
 from aeneas.runtimeconfiguration import RuntimeConfiguration
 from aeneas.synthesizer import Synthesizer
-from aeneas.timevalue import Decimal
-from aeneas.timevalue import TimeValue
-from aeneas.timevalue import InvalidOperation
 import aeneas.globalfunctions as gf
 
-__author__ = "Alberto Pettarin"
-__copyright__ = """
-    Copyright 2012-2013, Alberto Pettarin (www.albertopettarin.it)
-    Copyright 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-    Copyright 2015-2016, Alberto Pettarin (www.albertopettarin.it)
-    """
-__license__ = "GNU AGPL v3"
-__version__ = "1.5.1"
-__email__ = "aeneas@readbeyond.it"
-__status__ = "Production"
 
 class SD(Loggable):
     """
@@ -119,13 +129,13 @@ class SD(Loggable):
             max_head_length=None,
             min_tail_length=None,
             max_tail_length=None
-        ):
+    ):
         """
         Detect the interval of the audio file
         containing the fragments in the text file.
 
         Return the audio interval as a tuple of two
-        :class:`~aeneas.timevalue.TimeValue` objects,
+        :class:`~aeneas.exacttiming.TimeValue` objects,
         representing the begin and end time, in seconds,
         with respect to the full wave duration.
 
@@ -133,14 +143,14 @@ class SD(Loggable):
         (``0.0`` for min, ``10.0`` for max) will be used.
 
         :param min_head_length: estimated minimum head length
-        :type  min_head_length: :class:`~aeneas.timevalue.TimeValue`
+        :type  min_head_length: :class:`~aeneas.exacttiming.TimeValue`
         :param max_head_length: estimated maximum head length
-        :type  max_head_length: :class:`~aeneas.timevalue.TimeValue`
+        :type  max_head_length: :class:`~aeneas.exacttiming.TimeValue`
         :param min_tail_length: estimated minimum tail length
-        :type  min_tail_length: :class:`~aeneas.timevalue.TimeValue`
+        :type  min_tail_length: :class:`~aeneas.exacttiming.TimeValue`
         :param max_tail_length: estimated maximum tail length
-        :type  max_tail_length: :class:`~aeneas.timevalue.TimeValue`
-        :rtype: (:class:`~aeneas.timevalue.TimeValue`, :class:`~aeneas.timevalue.TimeValue`)
+        :type  max_tail_length: :class:`~aeneas.exacttiming.TimeValue`
+        :rtype: (:class:`~aeneas.exacttiming.TimeValue`, :class:`~aeneas.exacttiming.TimeValue`)
         :raises: TypeError: if one of the parameters is not ``None`` or a number
         :raises: ValueError: if one of the parameters is negative
         """
@@ -164,10 +174,10 @@ class SD(Loggable):
         Detect the audio head, returning its duration, in seconds.
 
         :param min_head_length: estimated minimum head length
-        :type  min_head_length: :class:`~aeneas.timevalue.TimeValue`
+        :type  min_head_length: :class:`~aeneas.exacttiming.TimeValue`
         :param max_head_length: estimated maximum head length
-        :type  max_head_length: :class:`~aeneas.timevalue.TimeValue`
-        :rtype: :class:`~aeneas.timevalue.TimeValue`
+        :type  max_head_length: :class:`~aeneas.exacttiming.TimeValue`
+        :rtype: :class:`~aeneas.exacttiming.TimeValue`
         :raises: TypeError: if one of the parameters is not ``None`` or a number
         :raises: ValueError: if one of the parameters is negative
         """
@@ -178,10 +188,10 @@ class SD(Loggable):
         Detect the audio tail, returning its duration, in seconds.
 
         :param min_tail_length: estimated minimum tail length
-        :type  min_tail_length: :class:`~aeneas.timevalue.TimeValue`
+        :type  min_tail_length: :class:`~aeneas.exacttiming.TimeValue`
         :param max_tail_length: estimated maximum tail length
-        :type  max_tail_length: :class:`~aeneas.timevalue.TimeValue`
-        :rtype: :class:`~aeneas.timevalue.TimeValue`
+        :type  max_tail_length: :class:`~aeneas.exacttiming.TimeValue`
+        :rtype: :class:`~aeneas.exacttiming.TimeValue`
         :raises: TypeError: if one of the parameters is not ``None`` or a number
         :raises: ValueError: if one of the parameters is negative
         """
@@ -197,10 +207,10 @@ class SD(Loggable):
         Return the duration of the head or tail, in seconds.
 
         :param min_length: estimated minimum length
-        :type  min_length: :class:`~aeneas.timevalue.TimeValue`
+        :type  min_length: :class:`~aeneas.exacttiming.TimeValue`
         :param max_length: estimated maximum length
-        :type  max_length: :class:`~aeneas.timevalue.TimeValue`
-        :rtype: :class:`~aeneas.timevalue.TimeValue`
+        :type  max_length: :class:`~aeneas.exacttiming.TimeValue`
+        :rtype: :class:`~aeneas.exacttiming.TimeValue`
         :raises: TypeError: if one of the parameters is not ``None`` or a number
         :raises: ValueError: if one of the parameters is negative
         """
@@ -324,6 +334,3 @@ class SD(Loggable):
         best = sorted(candidates)[0][1]
         self.log([u"Best candidate: %d == %.3f", best, best * mws])
         return best * mws
-
-
-

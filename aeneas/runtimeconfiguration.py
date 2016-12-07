@@ -1,6 +1,25 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 This module contains the following classes:
@@ -15,18 +34,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from aeneas.configuration import Configuration
-from aeneas.timevalue import TimeValue
+from aeneas.exacttiming import TimeValue
 
-__author__ = "Alberto Pettarin"
-__copyright__ = """
-    Copyright 2012-2013, Alberto Pettarin (www.albertopettarin.it)
-    Copyright 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-    Copyright 2015-2016, Alberto Pettarin (www.albertopettarin.it)
-    """
-__license__ = "GNU AGPL v3"
-__version__ = "1.5.1"
-__email__ = "aeneas@readbeyond.it"
-__status__ = "Production"
 
 class RuntimeConfiguration(Configuration):
     """
@@ -41,6 +50,25 @@ class RuntimeConfiguration(Configuration):
     :raises: KeyError: if trying to access a key not listed above
     """
 
+    ABA_NONSPEECH_TOLERANCE = "aba_nonspeech_tolerance"
+    """
+    Tolerance, in seconds, for considering a given time value
+    inside a nonspeech interval.
+
+    Default: ``0.080`` seconds.
+
+    .. versionadded:: 1.7.0
+    """
+
+    ABA_NO_ZERO_DURATION = "aba_no_zero_duration"
+    """
+    Offset, in seconds, to be added to fragments with zero length.
+
+    Default: ``0.001`` seconds.
+
+    .. versionadded:: 1.7.0
+    """
+
     ALLOW_UNLISTED_LANGUAGES = "allow_unlisted_languages"
     """
     If ``True``, allow using a language code
@@ -48,18 +76,20 @@ class RuntimeConfiguration(Configuration):
     otherwise, generate an error if the user attempts
     to use a language not listed.
 
-    Default: ``True``.
+    Default: ``False``.
 
     .. versionadded:: 1.4.1
     """
 
     C_EXTENSIONS = "c_extensions"
     """
-    If ``True`` and Python C extensions are available, use them.
-    Otherwise, use pure Python code.
+    If ``True`` and the Python C/C++ extensions
+    are available, use them.
+    Otherwise, use the pure Python code.
 
     This option is equivalent to
-    setting ``CDTW``, ``CEW``, and ``CMFCC`` to ``True`` at once.
+    setting ``CDTW``, ``CEW``, ``CFW``,
+    and ``CMFCC`` to ``True`` or ``False`` at once.
 
     Default: ``True``.
 
@@ -68,8 +98,9 @@ class RuntimeConfiguration(Configuration):
 
     CDTW = "cdtw"
     """
-    If ``True`` and Python C extension ``cdtw`` is available, use it.
-    Otherwise, use pure Python code.
+    If ``True`` and the Python C extension ``cdtw``
+    is available, use it.
+    Otherwise, use the pure Python code.
 
     Default: ``True``.
 
@@ -78,17 +109,32 @@ class RuntimeConfiguration(Configuration):
 
     CEW = "cew"
     """
-    If ``True`` and Python C extension ``cew`` is available, use it.
-    Otherwise, use pure Python code.
+    If ``True`` and the Python C extension ``cew``
+    is available, use it.
+    Otherwise, use the pure Python code.
 
     Default: ``True``.
 
     .. versionadded:: 1.5.1
     """
 
+    CFW = "cfw"
+    """
+    If ``True`` and the Python C++ extension ``cfw``
+    is available, use it.
+    Otherwise, use the pure Python code.
+
+    Default: ``True``.
+
+    .. versionadded:: 1.6.0
+    """
+
     CEW_SUBPROCESS_ENABLED = "cew_subprocess_enabled"
     """
-    If ``True``, calls to ``aeneas.cew`` will be done via ``subprocess``.
+    If ``True``, calls to ``aeneas.cew``
+    will be done via ``subprocess``, using the
+    :class:`~aeneas.cewsubprocess.CEWSubprocess`
+    helper class.
 
     Default: ``False``.
 
@@ -109,8 +155,9 @@ class RuntimeConfiguration(Configuration):
 
     CMFCC = "cmfcc"
     """
-    If ``True`` and Python C extension ``cmfcc`` is available, use it.
-    Otherwise, use pure Python code.
+    If ``True`` and the Python C extension ``cmfcc``
+    is available, use it.
+    Otherwise, use the pure Python code.
 
     Default: ``True``.
 
@@ -133,10 +180,43 @@ class RuntimeConfiguration(Configuration):
     """
     DTW aligner margin, in seconds, for the ``stripe`` algorithm.
 
-    Default: ``60``, corresponding to ``60s`` ahead and behind
-    (i.e., ``120s`` total margin).
+    Default: ``60``, corresponding to ``60 s`` ahead and behind
+    (i.e., ``120 s`` total margin).
 
     .. versionadded:: 1.4.1
+    """
+
+    DTW_MARGIN_L1 = "dtw_margin_l1"
+    """
+    DTW aligner margin, in seconds, for the ``stripe`` algorithm
+    at level 1 (paragraph).
+
+    Default: ``60``, corresponding to ``60 s`` ahead and behind
+    (i.e., ``120 s`` total margin).
+
+    .. versionadded:: 1.7.0
+    """
+
+    DTW_MARGIN_L2 = "dtw_margin_l2"
+    """
+    DTW aligner margin, in seconds, for the ``stripe`` algorithm
+    at level 2 (sentence).
+
+    Default: ``30``, corresponding to ``30 s`` ahead and behind
+    (i.e., ``60 s`` total margin).
+
+    .. versionadded:: 1.7.0
+    """
+
+    DTW_MARGIN_L3 = "dtw_margin_l3"
+    """
+    DTW aligner margin, in seconds, for the ``stripe`` algorithm
+    at level 3 (word).
+
+    Default: ``10``, corresponding to ``10 s`` ahead and behind
+    (i.e., ``20s`` total margin).
+
+    .. versionadded:: 1.7.0
     """
 
     FFMPEG_PATH = "ffmpeg_path"
@@ -237,6 +317,17 @@ class RuntimeConfiguration(Configuration):
     .. versionadded:: 1.4.1
     """
 
+    MFCC_MASK_NONSPEECH = "mfcc_mask_nonspeech"
+    """
+    If ``True``, computes the DTW path ignoring nonspeech frames.
+    Setting this parameter to ``True`` might help aligning
+    at word level granularity.
+
+    Default: ``False``.
+
+    .. versionadded:: 1.7.0
+    """
+
     MFCC_WINDOW_LENGTH = "mfcc_window_length"
     """
     Length of the window for extracting MFCCs, in seconds.
@@ -259,6 +350,16 @@ class RuntimeConfiguration(Configuration):
     .. versionadded:: 1.4.1
     """
 
+    MFCC_MASK_NONSPEECH_L1 = "mfcc_mask_nonspeech_l1"
+    """
+    If ``True``, computes the DTW path ignoring nonspeech frames
+    at level 1 (paragraph).
+
+    Default: ``False``.
+
+    .. versionadded:: 1.7.0
+    """
+
     MFCC_WINDOW_LENGTH_L1 = "mfcc_window_length_l1"
     """
     Length of the window, in seconds,
@@ -266,7 +367,7 @@ class RuntimeConfiguration(Configuration):
     It is usual to set it between 1.5 and 4 times
     the value of ``MFCC_WINDOW_SHIFT_L1``.
 
-    Default: ``0.500``.
+    Default: ``0.100``.
 
     .. versionadded:: 1.5.0
     """
@@ -278,9 +379,19 @@ class RuntimeConfiguration(Configuration):
     This parameter is basically the time step
     of the synchronization map output at level 1.
 
-    Default: ``0.200``.
+    Default: ``0.040``.
 
     .. versionadded:: 1.5.0
+    """
+
+    MFCC_MASK_NONSPEECH_L2 = "mfcc_mask_nonspeech_l2"
+    """
+    If ``True``, computes the DTW path ignoring nonspeech frames
+    at level 2 (sentence).
+
+    Default: ``False``.
+
+    .. versionadded:: 1.7.0
     """
 
     MFCC_WINDOW_LENGTH_L2 = "mfcc_window_length_l2"
@@ -290,7 +401,7 @@ class RuntimeConfiguration(Configuration):
     It is usual to set it between 1.5 and 4 times
     the value of ``MFCC_WINDOW_SHIFT_L2``.
 
-    Default: ``0.100``.
+    Default: ``0.050``.
 
     .. versionadded:: 1.5.0
     """
@@ -302,9 +413,19 @@ class RuntimeConfiguration(Configuration):
     This parameter is basically the time step
     of the synchronization map output at level 2.
 
-    Default: ``0.040``.
+    Default: ``0.020``.
 
     .. versionadded:: 1.5.0
+    """
+
+    MFCC_MASK_NONSPEECH_L3 = "mfcc_mask_nonspeech_l3"
+    """
+    If ``True``, computes the DTW path ignoring nonspeech frames
+    at level 3 (word).
+
+    Default: ``False``.
+
+    .. versionadded:: 1.7.0
     """
 
     MFCC_WINDOW_LENGTH_L3 = "mfcc_window_length_l3"
@@ -332,15 +453,78 @@ class RuntimeConfiguration(Configuration):
     """
 
     MFCC_GRANULARITY_MAP = {
-        1: (MFCC_WINDOW_LENGTH_L1, MFCC_WINDOW_SHIFT_L1),
-        2: (MFCC_WINDOW_LENGTH_L2, MFCC_WINDOW_SHIFT_L2),
-        3: (MFCC_WINDOW_LENGTH_L3, MFCC_WINDOW_SHIFT_L3),
+        1: (
+            DTW_MARGIN_L1,
+            MFCC_MASK_NONSPEECH_L1,
+            MFCC_WINDOW_LENGTH_L1,
+            MFCC_WINDOW_SHIFT_L1
+        ),
+        2: (
+            DTW_MARGIN_L2,
+            MFCC_MASK_NONSPEECH_L2,
+            MFCC_WINDOW_LENGTH_L2,
+            MFCC_WINDOW_SHIFT_L2
+        ),
+        3: (
+            DTW_MARGIN_L3,
+            MFCC_MASK_NONSPEECH_L3,
+            MFCC_WINDOW_LENGTH_L3,
+            MFCC_WINDOW_SHIFT_L3
+        ),
     }
     """
-    Map level numbers to ``MFCC_WINDOW_LENGTH_*``
-    and ``MFCC_WINDOW_SHIFT_*`` keys.
+    Map level numbers to
+    ``DTW_MARGIN_*``,
+    ``MFCC_MASK_NONSPEECH_*``,
+    ``MFCC_WINDOW_LENGTH_*``,
+    and ``MFCC_WINDOW_SHIFT_*``
+    keys.
 
     .. versionadded:: 1.5.0
+    """
+
+    MFCC_MASK_EXTEND_SPEECH_INTERVAL_AFTER = "mfcc_mask_extend_speech_after"
+    """
+    Extend to the right (after/future)
+    a speech interval found by the VAD algorithm,
+    by this many frames, when masking nonspeech out.
+
+    Default: ``0``.
+
+    .. versionadded:: 1.7.0
+    """
+
+    MFCC_MASK_EXTEND_SPEECH_INTERVAL_BEFORE = "mfcc_mask_extend_speech_before"
+    """
+    Extend to the left (before/past)
+    a speech interval found by the VAD algorithm,
+    by this many frames, when masking nonspeech out.
+
+    Default: ``0``.
+
+    .. versionadded:: 1.7.0
+    """
+
+    MFCC_MASK_LOG_ENERGY_THRESHOLD = "mfcc_mask_log_energy_threshold"
+    """
+    Threshold for the VAD algorithm to decide
+    that a given frame contains speech, when masking nonspeech out.
+    Note that this is the log10 of the energy coefficient.
+
+    Default: ``0.699`` = ``log10(5)``, that is, a frame must have
+    an energy at least 5 times higher than the minimum
+    to be considered a speech frame.
+
+    .. versionadded:: 1.7.0
+    """
+
+    MFCC_MASK_MIN_NONSPEECH_LENGTH = "mfcc_mask_min_nonspeech_length"
+    """
+    Minimum length, in frames, of a nonspeech interval to be masked out.
+
+    Default: ``1``.
+
+    .. versionadded:: 1.7.0
     """
 
     NUANCE_TTS_API_ID = "nuance_tts_api_id"
@@ -352,6 +536,10 @@ class RuntimeConfiguration(Configuration):
     Important: this feature is experimental, use at your own risk.
     It is recommended not to use this TTS at word-level granularity,
     as it will create many requests, hence it will be expensive.
+    If you still want to use it, you can enable
+    the TTS caching mechanism by setting
+    :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS_CACHE`
+    to ``True``.
 
     .. versionadded:: 1.5.0
     """
@@ -365,31 +553,27 @@ class RuntimeConfiguration(Configuration):
     Important: this feature is experimental, use at your own risk.
     It is recommended not to use this TTS at word-level granularity,
     as it will create many requests, hence it will be expensive.
+    If you still want to use it, you can enable
+    the TTS caching mechanism by setting
+    :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS_CACHE`
+    to ``True``.
 
     .. versionadded:: 1.5.0
     """
 
-    NUANCE_TTS_API_SLEEP = "nuance_tts_api_sleep"
+    SAFETY_CHECKS = "safety_checks"
     """
-    Wait this number of seconds before the next HTTP POST request
-    to the Nuance TTS API.
-    This parameter can be used to throttle the HTTP usage.
-    It cannot be a negative value.
+    If ``True``, perform safety checks on input files and parameters.
+    If set to ``False``, it disables:
 
-    Default: ``1.000``.
+    * checks perfomed by :class:`~aeneas.validator.Validator`;
+    * converting the audio file synthesized by the TTS engine so that its sample rate times the MFCC shift is an integer value.
 
-    .. versionadded:: 1.5.0
-    """
+    .. warning:: Setting this parameter to ``False`` might result in runtime errors. Please be sure to understand the implications.
 
-    NUANCE_TTS_API_RETRY_ATTEMPTS = "nuance_tts_api_retry_attempts"
-    """
-    Retry an HTTP POST request to the Nuance TTS API
-    for this number of times before giving up.
-    It must be an integer greater than zero.
+    Default: ``True``.
 
-    Default: ``5``.
-
-    .. versionadded:: 1.5.0
+    .. versionadded:: 1.7.0
     """
 
     TASK_MAX_AUDIO_LENGTH = "task_max_audio_length"
@@ -397,9 +581,10 @@ class RuntimeConfiguration(Configuration):
     Maximum length of the audio file of a Task, in seconds.
     If a Task has an audio file longer than this value,
     it will not be executed and an error will be raised.
-    Use ``0`` for disabling this check.
 
-    Default: ``7200`` seconds.
+    Use ``0`` to disable this check.
+
+    Default: ``0`` seconds.
 
     .. versionadded:: 1.4.1
     """
@@ -410,7 +595,7 @@ class RuntimeConfiguration(Configuration):
     If a Task has more text fragments than this value,
     it will not be executed and an error will be raised.
 
-    Use ``0`` for disabling this check.
+    Use ``0`` to disable this check.
 
     Default: ``0`` (disabled).
 
@@ -439,17 +624,43 @@ class RuntimeConfiguration(Configuration):
     The default value is
     :data:`~aeneas.synthesizer.Synthesizer.ESPEAK` (``espeak``)
     which will use the built-in eSpeak TTS wrapper.
+    You might need to provide a ``/full/path/to/your/espeak`` value
+    to the
+    :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS_PATH`
+    parameter if the command ``espeak`` is not available in
+    one of the directories listed in your ``PATH`` environment variable.
+
+    Specify the value
+    :data:`~aeneas.synthesizer.Synthesizer.ESPEAKNG` (``espeak-ng``)
+    to use the eSpeak-ng TTS wrapper.
+    You might need to provide a ``/full/path/to/your/espeak-ng`` value
+    to the
+    :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS_PATH`
+    parameter if the command ``espeak-ng`` is not available in
+    one of the directories listed in your ``PATH`` environment variable.
 
     Specify the value
     :data:`~aeneas.synthesizer.Synthesizer.FESTIVAL` (``festival``)
-    to use the built-in Festival TTS wrapper;
-    you might need to provide the ``text2wave`` or ``/full/path/to/your/text2wave`` value
+    to use the built-in Festival TTS wrapper.
+    You might need to provide a ``/full/path/to/your/text2wave`` value
     to the
     :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS_PATH`
-    parameter.
+    parameter if the command ``text2wave`` is not available in
+    one of the directories listed in your ``PATH`` environment variable.
 
     Specify the value
-    :data:`~aeneas.synthesizer.Synthesizer.NUANCETTSAPI` (``nuancettsapi``)
+    :data:`~aeneas.synthesizer.Synthesizer.AWS` (``aws``)
+    to use the built-in AWS Polly TTS API wrapper;
+    you will need to provide your AWS API Access Key and Secret Access Key
+    by either storing them on disk
+    (e.g., in ``~/.aws/credentials`` and ``~/.aws/config``)
+    or setting them in environment variables.
+    Please refer to
+    http://boto3.readthedocs.io/en/latest/guide/configuration.html
+    for further details.
+
+    Specify the value
+    :data:`~aeneas.synthesizer.Synthesizer.NUANCE` (``nuance``)
     to use the built-in Nuance TTS API wrapper;
     you will need to provide your Nuance Developer API ID and API Key using the
     :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.NUANCE_TTS_API_ID`
@@ -476,10 +687,12 @@ class RuntimeConfiguration(Configuration):
     (see the ``aeneas/extra`` directory for examples).
 
     You might need to use a full path,
-    like ``/path/to/your/tts`` or
+    like ``/path/to/your/ttsengine`` or
     ``/path/to/your/ttswrapper.py``.
 
-    Default: ``espeak``.
+    Default: ``None``, implying to use the default path
+    defined by each TTS wrapper, if it calls the TTS engine
+    via ``subprocess`` (otherwise it does not matter).
 
     .. versionadded:: 1.5.0
     """
@@ -490,7 +703,143 @@ class RuntimeConfiguration(Configuration):
     If you specify this value, it will override the default voice code
     associated with the language of your text.
 
+    Default: ``None``.
+
     .. versionadded:: 1.5.0
+    """
+
+    TTS_CACHE = "tts_cache"
+    """
+    If set to ``True``, synthesize each distinct text fragment
+    only once, caching the resulting audio data as a file on disk.
+
+    The cache files will be removed after the synthesis is compled.
+
+    This option is useful when calling TTS engines,
+    via subprocess or remote APIs,
+    on text files with many identical fragments,
+    for example when aligning at word-level granularity.
+
+    Enabling this option will create the cache files in
+    :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TMP_PATH`,
+    so make sure that that path has enough free space.
+
+    Default: ``False``.
+
+    .. versionadded:: 1.6.0
+    """
+
+    TTS_API_SLEEP = "tts_api_sleep"
+    """
+    Wait this number of seconds before the next HTTP POST request
+    to the Nuance TTS API.
+    This parameter can be used to throttle the HTTP usage.
+    It cannot be a negative value.
+
+    Note that this parameter was called ``nuance_tts_api_sleep``
+    before v1.7.0.
+
+    Default: ``1.000``.
+
+    .. versionadded:: 1.5.0
+    """
+
+    TTS_API_RETRY_ATTEMPTS = "tts_api_retry_attempts"
+    """
+    Retry an HTTP POST request to the Nuance TTS API
+    for this number of times before giving up.
+    It must be an integer greater than zero.
+
+    Note that this parameter was called ``nuance_tts_api_retry_attempts``
+    before v1.7.0.
+
+    Default: ``5``.
+
+    .. versionadded:: 1.5.0
+    """
+
+    TTS_L1 = "tts_l1"
+    """
+    The TTS engine to use for synthesizing text
+    at level 1 (paragraph).
+
+    See also :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS`.
+
+    Default: ``espeak``.
+
+    .. versionadded:: 1.6.0
+    """
+
+    TTS_PATH_L1 = "tts_path_l1"
+    """
+    Path to the TTS engine executable to use for synthesizing text
+    at level 1 (paragraph).
+
+    See also :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS_PATH`.
+
+    Default: ``None``.
+
+    .. versionadded:: 1.6.0
+    """
+
+    TTS_L2 = "tts_l2"
+    """
+    The TTS engine to use for synthesizing text
+    at level 2 (sentence).
+
+    See also :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS`.
+
+    Default: ``espeak``.
+
+    .. versionadded:: 1.6.0
+    """
+
+    TTS_PATH_L2 = "tts_path_l2"
+    """
+    Path to the TTS engine executable to use for synthesizing text
+    at level 2 (sentence).
+
+    See also :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS_PATH`.
+
+    Default: ``None``.
+
+    .. versionadded:: 1.6.0
+    """
+
+    TTS_L3 = "tts_l3"
+    """
+    The TTS engine to use for synthesizing text
+    at level 3 (word).
+
+    See also :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS`.
+
+    Default: ``espeak``.
+
+    .. versionadded:: 1.6.0
+    """
+
+    TTS_PATH_L3 = "tts_path_l3"
+    """
+    Path to the TTS engine executable to use for synthesizing text
+    at level 3 (word).
+
+    See also :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS_PATH`.
+
+    Default: ``None``.
+
+    .. versionadded:: 1.6.0
+    """
+
+    TTS_GRANULARITY_MAP = {
+        1: (TTS_L1, TTS_PATH_L1),
+        2: (TTS_L2, TTS_PATH_L2),
+        3: (TTS_L3, TTS_PATH_L3),
+    }
+    """
+    Map level numbers to ``TTS_*``
+    and ``TTS_PATH_*`` keys.
+
+    .. versionadded:: 1.6.0
     """
 
     VAD_EXTEND_SPEECH_INTERVAL_AFTER = "vad_extend_speech_after"
@@ -539,61 +888,88 @@ class RuntimeConfiguration(Configuration):
 
     # NOTE not using aliases just not to become confused
     #      about external (user rconf) and internal (lib code) key names
+    #      although the functionality might be useful in the future
     FIELDS = [
-        (ALLOW_UNLISTED_LANGUAGES, (False, bool, [])),
+        (ABA_NONSPEECH_TOLERANCE, ("0.080", TimeValue, [], u"adjust nonspeech tolerance, in s")),
+        (ABA_NO_ZERO_DURATION, ("0.001", TimeValue, [], u"add this shift to zero length fragments, in s")),
+        (ALLOW_UNLISTED_LANGUAGES, (False, bool, [], u"if True, allow languages not listed")),
 
-        (C_EXTENSIONS, (True, bool, [])),
-        (CDTW, (True, bool, [])),
-        (CEW, (True, bool, [])),
-        (CMFCC, (True, bool, [])),
+        (C_EXTENSIONS, (True, bool, [], u"run C/C++ extensions")),
+        (CDTW, (True, bool, [], u"run C extension cdtw")),
+        (CEW, (True, bool, [], u"run C extension cew")),
+        (CFW, (True, bool, [], u"run C++ extension cfw")),
+        (CMFCC, (True, bool, [], u"run C extension cmfcc")),
 
-        (CEW_SUBPROCESS_ENABLED, (False, bool, [])),
-        (CEW_SUBPROCESS_PATH, ("python", None, [])), # or a full path like "/usr/bin/python"
+        (CEW_SUBPROCESS_ENABLED, (False, bool, [], u"run cew in separate subprocess")),
+        (CEW_SUBPROCESS_PATH, ("python", None, [], u"path to python executable")),          # or a full path like "/usr/bin/python"
 
-        (DTW_ALGORITHM, ("stripe", None, [])),
-        (DTW_MARGIN, ("60.000", TimeValue, [])),
+        (DTW_ALGORITHM, ("stripe", None, [], u"DTW algorithm (stripe, exact)")),
+        (DTW_MARGIN, ("60.000", TimeValue, [], u"DTW margin, in s")),
 
-        (FFMPEG_PATH, ("ffmpeg", None, [])), # or a full path like "/usr/bin/ffmpeg"
-        (FFMPEG_SAMPLE_RATE, (16000, int, [])),
+        (FFMPEG_PATH, ("ffmpeg", None, [], u"path to ffmpeg executable")),                  # or a full path like "/usr/bin/ffmpeg"
+        (FFMPEG_SAMPLE_RATE, (16000, int, [], u"ffmpeg sample rate")),
 
-        (FFPROBE_PATH, ("ffprobe", None, [])), # or a full path like "/usr/bin/ffprobe"
+        (FFPROBE_PATH, ("ffprobe", None, [], u"path to ffprobe executable")),               # or a full path like "/usr/bin/ffprobe"
 
-        (JOB_MAX_TASKS, (0, int, [])),
+        (JOB_MAX_TASKS, (0, int, [], u"max number of tasks per job (0 to disable)")),
 
-        (MFCC_FILTERS, (40, int, [])),
-        (MFCC_SIZE, (13, int, [])),
-        (MFCC_FFT_ORDER, (512, int, [])),
-        (MFCC_LOWER_FREQUENCY, (133.3333, float, [])),
-        (MFCC_UPPER_FREQUENCY, (6855.4976, float, [])),
-        (MFCC_EMPHASIS_FACTOR, (0.970, float, [])),
-        (MFCC_WINDOW_LENGTH, ("0.100", TimeValue, [])),
-        (MFCC_WINDOW_SHIFT, ("0.040", TimeValue, [])),
+        (MFCC_FILTERS, (40, int, [], u"number of MFCC filters")),
+        (MFCC_SIZE, (13, int, [], u"number of MFCC")),
+        (MFCC_FFT_ORDER, (512, int, [], u"FFT order for computing MFCC")),
+        (MFCC_LOWER_FREQUENCY, (133.3333, float, [], u"MFCC lower frequency cutoff, in Hz")),
+        (MFCC_UPPER_FREQUENCY, (6855.4976, float, [], u"MFCC upper frequency cutoff, in Hz")),
+        (MFCC_EMPHASIS_FACTOR, (0.970, float, [], u"MFCC emphasis factor")),
 
-        (MFCC_WINDOW_LENGTH_L1, ("0.500", TimeValue, [])),
-        (MFCC_WINDOW_SHIFT_L1, ("0.200", TimeValue, [])),
-        (MFCC_WINDOW_LENGTH_L2, ("0.100", TimeValue, [])),
-        (MFCC_WINDOW_SHIFT_L2, ("0.040", TimeValue, [])),
-        (MFCC_WINDOW_LENGTH_L3, ("0.020", TimeValue, [])),
-        (MFCC_WINDOW_SHIFT_L3, ("0.005", TimeValue, [])),
+        (MFCC_MASK_NONSPEECH, (False, bool, [], u"if True, mask MFCC nonspeech frames")),
+        (MFCC_WINDOW_LENGTH, ("0.100", TimeValue, [], u"MFCC window length, in s")),
+        (MFCC_WINDOW_SHIFT, ("0.040", TimeValue, [], u"MFCC window shift, in s")),
 
-        (NUANCE_TTS_API_ID, (None, None, [])),
-        (NUANCE_TTS_API_KEY, (None, None, [])),
-        (NUANCE_TTS_API_SLEEP, ("1.000", TimeValue, [])),
-        (NUANCE_TTS_API_RETRY_ATTEMPTS, (5, int, [])),
+        (MFCC_MASK_EXTEND_SPEECH_INTERVAL_AFTER, (0, int, [], u"when masking MFCC, extend speech interval after, in frames")),
+        (MFCC_MASK_EXTEND_SPEECH_INTERVAL_BEFORE, (0, int, [], u"when masking MFCC, extend speech interval before, in frames")),
+        (MFCC_MASK_LOG_ENERGY_THRESHOLD, (0.699, float, [], u"when masking MFCC, log energy threshold for speech")),
+        (MFCC_MASK_MIN_NONSPEECH_LENGTH, (1, int, [], u"when masking MFCC, min nonspeech interval length, in frames")),
 
-        (TASK_MAX_AUDIO_LENGTH, ("7200.0", TimeValue, [])),
-        (TASK_MAX_TEXT_LENGTH, (0, int, [])),
+        (DTW_MARGIN_L1, ("60.000", TimeValue, [], u"level 1 (para) DTW margin, in s")),
+        (MFCC_MASK_NONSPEECH_L1, (False, bool, [], u"if True, mask MFCC nonspeech frames on level 1 (para)")),
+        (MFCC_WINDOW_LENGTH_L1, ("0.100", TimeValue, [], u"level 1 (para) MFCC window length, in s")),
+        (MFCC_WINDOW_SHIFT_L1, ("0.040", TimeValue, [], u"level 1 (para) MFCC window shift, in s")),
+        (DTW_MARGIN_L2, ("30.000", TimeValue, [], u"level 2 (sent) DTW margin, in s")),
+        (MFCC_MASK_NONSPEECH_L2, (False, bool, [], u"if True, mask MFCC nonspeech frames on level 2 (sent)")),
+        (MFCC_WINDOW_LENGTH_L2, ("0.050", TimeValue, [], u"level 2 (sent) MFCC window length, in s")),
+        (MFCC_WINDOW_SHIFT_L2, ("0.020", TimeValue, [], u"level 2 (sent) MFCC window shift, in s")),
+        (DTW_MARGIN_L3, ("10.000", TimeValue, [], u"level 3 (word) DTW margin, in s")),
+        (MFCC_MASK_NONSPEECH_L3, (False, bool, [], u"if True, mask MFCC nonspeech frames on level 3 (word)")),
+        (MFCC_WINDOW_LENGTH_L3, ("0.020", TimeValue, [], u"level 3 (word) MFCC window length, in s")),
+        (MFCC_WINDOW_SHIFT_L3, ("0.005", TimeValue, [], u"level 3 (word) MFCC window shift, in s")),
 
-        (TMP_PATH, (None, None, [])),
+        (NUANCE_TTS_API_ID, (None, None, [], u"Nuance Developer API ID")),
+        (NUANCE_TTS_API_KEY, (None, None, [], u"Nuance Developer API Key")),
 
-        (TTS, ("espeak", None, [])),
-        (TTS_PATH, ("espeak", None, [])), # or a full path like "/usr/bin/espeak"
-        (TTS_VOICE_CODE, (None, None, [])),
+        (SAFETY_CHECKS, (True, bool, [], u"if True, always perform safety checks")),
 
-        (VAD_EXTEND_SPEECH_INTERVAL_AFTER, ("0.000", TimeValue, [])),
-        (VAD_EXTEND_SPEECH_INTERVAL_BEFORE, ("0.000", TimeValue, [])),
-        (VAD_LOG_ENERGY_THRESHOLD, (0.699, float, [])),
-        (VAD_MIN_NONSPEECH_LENGTH, ("0.200", TimeValue, [])),
+        (TASK_MAX_AUDIO_LENGTH, ("0", TimeValue, [], u"max length of single audio file, in s (0 to disable)")),
+        (TASK_MAX_TEXT_LENGTH, (0, int, [], u"max length of single text file, in fragments (0 to disable)")),
+
+        (TMP_PATH, (None, None, [], u"path to the temporary dir")),
+
+        (TTS, ("espeak", None, [], u"TTS wrapper to use")),
+        (TTS_PATH, (None, None, [], u"path of the TTS executable/wrapper")),                # None (= default) or "espeak" or "/usr/bin/espeak"
+        (TTS_VOICE_CODE, (None, None, [], u"overrides TTS voice code selected by language with this value")),
+        (TTS_CACHE, (False, bool, [], u"if True, cache synthesized audio files")),
+        (TTS_API_SLEEP, ("1.000", TimeValue, [], u"sleep between TTS API calls, in s")),
+        (TTS_API_RETRY_ATTEMPTS, (5, int, [], u"number of retries for a failed TTS API call")),
+
+        (TTS_L1, ("espeak", None, [], u"TTS wrapper to use at level 1 (para)")),
+        (TTS_PATH_L1, (None, None, [], u"path to level 1 (para) TTS executable/wrapper")),  # None (= default) or "espeak" or "/usr/bin/espeak"
+        (TTS_L2, ("espeak", None, [], u"TTS wrapper to use at level 2 (sent)")),
+        (TTS_PATH_L2, (None, None, [], u"path to level 2 (sent) TTS executable/wrapper")),  # None (= default) or "espeak" or "/usr/bin/espeak"
+        (TTS_L3, ("espeak", None, [], u"TTS wrapper to use at level 3 (word)")),
+        (TTS_PATH_L3, (None, None, [], u"path to level 3 (word) TTS executable/wrapper")),  # None (= default) or "espeak" or "/usr/bin/espeak"
+
+        (VAD_EXTEND_SPEECH_INTERVAL_AFTER, ("0.000", TimeValue, [], u"extend speech interval after, in s")),
+        (VAD_EXTEND_SPEECH_INTERVAL_BEFORE, ("0.000", TimeValue, [], u"extend speech interval before, in s")),
+        (VAD_LOG_ENERGY_THRESHOLD, (0.699, float, [], u"log energy threshold for speech")),
+        (VAD_MIN_NONSPEECH_LENGTH, ("0.200", TimeValue, [], u"min nonspeech interval length, in s")),
     ]
 
     TAG = u"RuntimeConfiguration"
@@ -601,18 +977,51 @@ class RuntimeConfiguration(Configuration):
     def __init__(self, config_string=None):
         super(RuntimeConfiguration, self).__init__(config_string)
 
-    def clone(self):
+    @property
+    def safety_checks(self):
         """
-        Return a new configuration object
-        that contains a copy of this configuration object.
+        Return the value of the
+        :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.SAFETY_CHECKS`
+        key stored in this configuration object.
 
-        :rtype: :class:`~aeneas.runtimeconfiguration.RuntimeConfiguration`
+        If ``False``, safety checks are not performed.
+
+        :rtype: bool
         """
-        new_rconf = RuntimeConfiguration()
-        new_rconf.data = dict(self.data)
-        new_rconf.types = dict(self.types)
-        new_rconf.aliases = dict(self.aliases)
-        return new_rconf
+        return self[self.SAFETY_CHECKS]
+
+    @property
+    def sample_rate(self):
+        """
+        Return the value of the
+        :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.FFMPEG_SAMPLE_RATE`
+        key stored in this configuration object.
+
+        :rtype: int
+        """
+        return self[self.FFMPEG_SAMPLE_RATE]
+
+    @property
+    def dtw_margin(self):
+        """
+        Return the value of the
+        :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.DTW_MARGIN`
+        key stored in this configuration object.
+
+        :rtype: :class:`~aeneas.exacttiming.TimeValue`
+        """
+        return self[self.DTW_MARGIN]
+
+    @property
+    def mmn(self):
+        """
+        Return the value of the
+        :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.MFCC_MASK_NONSPEECH`
+        key stored in this configuration object.
+
+        :rtype: bool
+        """
+        return self[self.MFCC_MASK_NONSPEECH]
 
     @property
     def mws(self):
@@ -621,7 +1030,7 @@ class RuntimeConfiguration(Configuration):
         :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.MFCC_WINDOW_SHIFT`
         key stored in this configuration object.
 
-        :rtype: :class:`~aeneas.timevalue.TimeValue`
+        :rtype: :class:`~aeneas.exacttiming.TimeValue`
         """
         return self[self.MFCC_WINDOW_SHIFT]
 
@@ -632,9 +1041,31 @@ class RuntimeConfiguration(Configuration):
         :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.MFCC_WINDOW_LENGTH`
         key stored in this configuration object.
 
-        :rtype: :class:`~aeneas.timevalue.TimeValue`
+        :rtype: :class:`~aeneas.exacttiming.TimeValue`
         """
         return self[self.MFCC_WINDOW_LENGTH]
+
+    @property
+    def tts(self):
+        """
+        Return the value of the
+        :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS`
+        key stored in this configuration object.
+
+        :rtype: string
+        """
+        return self[self.TTS]
+
+    @property
+    def tts_path(self):
+        """
+        Return the value of the
+        :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS_PATH`
+        key stored in this configuration object.
+
+        :rtype: string
+        """
+        return self[self.TTS_PATH]
 
     def set_granularity(self, level):
         """
@@ -653,9 +1084,29 @@ class RuntimeConfiguration(Configuration):
         :param int level: the desired granularity level
         """
         if level in self.MFCC_GRANULARITY_MAP.keys():
-            length_key, shift_key = self.MFCC_GRANULARITY_MAP[level]
+            margin_key, mask_key, length_key, shift_key = self.MFCC_GRANULARITY_MAP[level]
+            self[self.DTW_MARGIN] = self[margin_key]
+            self[self.MFCC_MASK_NONSPEECH] = self[mask_key]
             self[self.MFCC_WINDOW_LENGTH] = self[length_key]
             self[self.MFCC_WINDOW_SHIFT] = self[shift_key]
 
+    def set_tts(self, level):
+        """
+        Set the values for
+        :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS`
+        and
+        :data:`~aeneas.runtimeconfiguration.RuntimeConfiguration.TTS_PATH`
+        matching the given granularity level.
 
+        Currently supported levels:
 
+        * ``1`` (paragraph)
+        * ``2`` (sentence)
+        * ``3`` (word)
+
+        :param int level: the desired granularity level
+        """
+        if level in self.TTS_GRANULARITY_MAP.keys():
+            tts_key, tts_path_key = self.TTS_GRANULARITY_MAP[level]
+            self[self.TTS] = self[tts_key]
+            self[self.TTS_PATH] = self[tts_path_key]
