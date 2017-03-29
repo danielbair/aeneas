@@ -6,7 +6,7 @@
 #
 # Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
 # Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2015-2017, Alberto Pettarin (www.albertopettarin.it)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -56,9 +56,21 @@ class TestReadAudioCLI(unittest.TestCase):
             ("in", "../tools/res/audio.wav")
         ], 0)
 
+    def test_read_audio_full(self):
+        self.execute([
+            ("in", "../tools/res/audio.wav"),
+            ("", "-f")
+        ], 0)
+
     def test_read_audio_mp3(self):
         self.execute([
             ("in", "../tools/res/audio.mp3")
+        ], 0)
+
+    def test_read_audio_mp3_full(self):
+        self.execute([
+            ("in", "../tools/res/audio.mp3"),
+            ("", "-f")
         ], 0)
 
     def test_read_audio_path(self):

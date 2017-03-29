@@ -6,7 +6,7 @@
 #
 # Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
 # Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2015-2017, Alberto Pettarin (www.albertopettarin.it)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -1005,6 +1005,19 @@ def delete_directory(path):
             pass
 
 
+def close_file_handler(handler):
+    """
+    Safely close the given file handler.
+
+    :param object handler: the file handler (as returned by tempfile)
+    """
+    if handler is not None:
+        try:
+            os.close(handler)
+        except:
+            pass
+
+
 def delete_file(handler, path):
     """
     Safely delete file.
@@ -1012,11 +1025,7 @@ def delete_file(handler, path):
     :param object handler: the file handler (as returned by tempfile)
     :param string path: the file path
     """
-    if handler is not None:
-        try:
-            os.close(handler)
-        except:
-            pass
+    close_file_handler(handler)
     if path is not None:
         try:
             os.remove(path)

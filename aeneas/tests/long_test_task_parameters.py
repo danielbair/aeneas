@@ -6,7 +6,7 @@
 #
 # Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
 # Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2015-2017, Alberto Pettarin (www.albertopettarin.it)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -351,6 +351,14 @@ class TestExecuteTaskCLI(unittest.TestCase):
             ("in", "../tools/res/audio.mp3"),
             ("in", "../tools/res/mplain.txt"),
             ("", "task_language=eng|is_text_type=mplain|os_task_file_format=json|os_task_file_levels=123"),
+            ("out", "sonnet.json")
+        ], 0)
+
+    def test_exec_exact_5600_16000_munparsed_issue_168(self):
+        self.execute([
+            ("in", "../tests/res/audioformats/exact.5600.16000.wav"),
+            ("in", "../tests/res/inputtext/exact.5600.16000.munparsed.xhtml"),
+            ("", "task_language=eng|is_text_type=munparsed|os_task_file_format=json|is_text_munparsed_l1_id_regex=p[0-9]+|is_text_munparsed_l2_id_regex=p[0-9]+s[0-9]+|is_text_munparsed_l3_id_regex=p[0-9]+s[0-9]+w[0-9]+"),
             ("out", "sonnet.json")
         ], 0)
 

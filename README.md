@@ -1,16 +1,16 @@
-# aeneas 
+# aeneas
 
 **aeneas** is a Python/C library and a set of tools to automagically synchronize audio and text (aka forced alignment).
 
-* Version: 1.7.0
-* Date: 2016-12-07
+* Version: 1.7.3
+* Date: 2017-03-15
 * Developed by: [ReadBeyond](http://www.readbeyond.it/)
 * Lead Developer: [Alberto Pettarin](http://www.albertopettarin.it/)
 * License: the GNU Affero General Public License Version 3 (AGPL v3)
 * Contact: [aeneas@readbeyond.it](mailto:aeneas@readbeyond.it)
 * Quick Links: [Home](http://www.readbeyond.it/aeneas/) - [GitHub](https://github.com/readbeyond/aeneas/) - [PyPI](https://pypi.python.org/pypi/aeneas/) - [Docs](http://www.readbeyond.it/aeneas/docs/) - [Tutorial](http://www.readbeyond.it/aeneas/docs/clitutorial.html) - [Benchmark](https://readbeyond.github.io/aeneas-benchmark/) - [Mailing List](https://groups.google.com/d/forum/aeneas-forced-alignment) - [Web App](http://aeneasweb.org)
 
- 
+
 ## Goal
 
 **aeneas** automatically generates a **synchronization map**
@@ -60,7 +60,7 @@ in several formats, depending on its application:
 ### System Requirements
 
 1. a reasonably recent machine (recommended 4 GB RAM, 2 GHz 64bit CPU)
-2. [Python](https://python.org/) 2.7 (Linux, OS X, Windows) or 3.4 or later (Linux, OS X)
+2. [Python](https://python.org/) 2.7 (Linux, OS X, Windows) or 3.5 or later (Linux, OS X)
 3. [FFmpeg](https://www.ffmpeg.org/)
 4. [eSpeak](http://espeak.sourceforge.net/)
 5. Python packages `BeautifulSoup4`, `lxml`, and `numpy`
@@ -109,7 +109,7 @@ The generic OS-independent procedure is simple:
    `espeak`, `ffmpeg`, `ffprobe`, `pip`, and `python`
 
 3. First install `numpy` with `pip` and then `aeneas` (this order is important):
-    
+
     ```bash
     pip install numpy
     pip install aeneas
@@ -185,7 +185,7 @@ The generic OS-independent procedure is simple:
     ```bash
     python -m aeneas.tools.execute_job job.zip output_directory
     ```
-    
+
    File `job.zip` should contain a `config.txt` or `config.xml`
    configuration file, providing **aeneas**
    with all the information needed to parse the input assets
@@ -235,7 +235,7 @@ which explains how to use the built-in command line tools.
 * Output sync map formats: AUD, CSV, EAF, JSON, SMIL, SRT, SSV, SUB, TEXTGRID, TSV, TTML, TXT, VTT, XML
 * Confirmed working on 38 languages: AFR, ARA, BUL, CAT, CYM, CES, DAN, DEU, ELL, ENG, EPO, EST, FAS, FIN, FRA, GLE, GRC, HRV, HUN, ISL, ITA, JPN, LAT, LAV, LIT, NLD, NOR, RON, RUS, POL, POR, SLK, SPA, SRP, SWA, SWE, TUR, UKR
 * MFCC and DTW computed via Python C extensions to reduce the processing time
-* Several built-in TTS engine wrappers: AWS Polly TTS API, eSpeak (default), eSpeak-ng, Festival, Nuance TTS API
+* Several built-in TTS engine wrappers: AWS Polly TTS API, eSpeak (default), eSpeak-ng, Festival, MacOS (via say), Nuance TTS API
 * Default TTS (eSpeak) called via a Python C extension for fast audio synthesis
 * Possibility of running a custom, user-provided TTS engine Python wrapper (e.g., included example for speect)
 * Batch processing of multiple audio/text pairs
@@ -251,7 +251,7 @@ which explains how to use the built-in command line tools.
 * Extensive test suite including 1,200+ unit/integration/performance tests, that run and must pass before each release
 
 
-## Limitations and Missing Features 
+## Limitations and Missing Features
 
 * Audio should match the text: large portions of spurious text or audio might produce a wrong sync map
 * Audio is assumed to be spoken: not suitable for song captioning, YMMV for CC applications
@@ -304,7 +304,7 @@ No copy rights were harmed in the making of this project.
 
 ## Supporting and Contributing
 
-### Sponsors 
+### Sponsors
 
 * **July 2015**: [Michele Gianella](https://plus.google.com/+michelegianella/about) generously supported the development of the boundary adjustment code (v1.0.4)
 
@@ -316,7 +316,7 @@ No copy rights were harmed in the making of this project.
 
 * **April 2016**: the Fruch Foundation kindly sponsored the development and documentation of v1.5.0
 
-* **December 2016**: the [Centro Internazionale Del Libro Parlato "Adriano Sernagiotto"](http://www.libroparlato.org/) (Feltre, Italy) partially sponsored the development of v1.7.0
+* **December 2016**: the [Centro Internazionale Del Libro Parlato "Adriano Sernagiotto"](http://www.libroparlato.org/) (Feltre, Italy) partially sponsored the development of the v1.7 series
 
 ### Supporting
 
@@ -379,10 +379,9 @@ HTML/JS code for fine tuning sync maps in the browser.
 **Willem van der Walt** contributed the code snippet
 to output a sync map in TextGrid format.
 
+**Chris Vaughn** contributed the MacOS TTS wrapper.
+
 All the mighty
 [GitHub contributors](https://github.com/readbeyond/aeneas/graphs/contributors),
 and the members of the
 [Google Group](https://groups.google.com/d/forum/aeneas-forced-alignment).
-
-
-

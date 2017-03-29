@@ -6,7 +6,7 @@
 #
 # Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
 # Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-# Copyright (C) 2015-2016, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2015-2017, Alberto Pettarin (www.albertopettarin.it)
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -209,9 +209,12 @@ class AudioFile(Loggable):
         self.__samples = None
 
     def __unicode__(self):
+        fmt = self.file_format
+        if isinstance(fmt, tuple):
+            fmt = u"%s %d %d" % fmt
         msg = [
             u"File path:         %s" % self.file_path,
-            u"File format:       %s" % self.file_format,
+            u"File format:       %s" % fmt,
             u"File size (bytes): %s" % gf.safe_int(self.file_size),
             u"Audio length (s):  %s" % gf.safe_float(self.audio_length),
             u"Audio format:      %s" % self.audio_format,
@@ -644,4 +647,7 @@ class AudioFile(Loggable):
         This function fails silently if one of the two is ``None``.
         """
         if (self.audio_sample_rate is not None) and (self.__samples is not None):
-            self.audio_length = TimeValue(self.__samples_length / self.audio_sample_rate)
+            # NOTE computing TimeValue (... / ...) yields wrong results,
+            #      see issue #168
+            #      self.audio_length = TimeValue(self.__samples_length / self.audio_sample_rate)
+            self.audio_length = TimeValue(self.__samples_length) / TimeValue(self.audio_sample_rate)

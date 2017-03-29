@@ -1,6 +1,32 @@
 Changelog
 =========
 
+v1.7.3 (2017-03-15)
+-------------------
+
+#. Fixed bug #168 and added a regression test for it
+#. Added option ``-f, --full`` to ``aeneas.tools.read_audio`` and tests for it
+
+v1.7.2 (2017-03-03)
+-------------------
+
+#. Added MacOS TTS Wrapper (courtesy of Chris Vaughn)
+#. Removed dependency from ``pafy``, using ``youtube-dl`` directly (#159)
+#. Added retry mechanism to ``Downloader``, including ``DOWNLOADER_SLEEP`` and ``DOWNLOADER_RETRY_ATTEMPTS`` in ``RuntimeConfiguration``
+#. Fixed bug #160
+#. Fixed a latent bug with arbitrary shifts in aba when using the ``task_adjust_boundary_no_zero`` option
+#. Fixed a latent bug in AWS Polly and Nuance wrappers
+#. Updated copyright strings with 2017
+#. Updated ``INSTALL.md`` to brew install from Daniel Bair's tap instead of official brew repo since they removed the formula for aeneas (#165)
+
+v1.7.1 (2016-12-20)
+-------------------
+
+#. Fix bug #151
+#. Downgraded dependency on lxml to lxml>=3.6.0 to help packaging the Windows installer
+#. Added aeneas version to log
+#. Changed default voice for Festival TTS Wrapper to ``eng-USA`` to help people installing from source on Mac OS X
+
 v1.7.0 (2016-12-07)
 -------------------
 

@@ -126,7 +126,7 @@ Dependencies
 ------------
 
 * ``numpy`` (v1.9 or later)
-* ``lxml`` (v3.6.4 or later)
+* ``lxml`` (v3.6.0 or later)
 * ``BeautifulSoup`` (v4.5.1 or later)
 
 Only ``numpy`` is actually needed, as it is heavily used for the alignment computation.
@@ -144,7 +144,7 @@ you might need to install the following optional dependencies:
 * ``requests`` (for using the Nuance TTS API wrapper)
 * ``Pillow`` (for plotting waveforms with :mod:`~aeneas.plotter`)
 * ``tgt`` (for outputting sync maps to TextGrid format)
-* ``youtube-dl`` and ``pafy`` (for downloading audio from Internet with :class:`~aeneas.downloader.Downloader`)
+* ``youtube-dl`` (for downloading audio from Internet with :class:`~aeneas.downloader.Downloader`)
 
 
 
@@ -479,6 +479,7 @@ in the synthesis step of the alignment procedure.
     espeakttswrapper
     espeakngttswrapper
     festivalttswrapper
+    macosttswrapper
     nuancettswrapper
 
 
