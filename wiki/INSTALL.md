@@ -7,22 +7,31 @@ The **recommended options** are:
 * Mac OS X: using the all-in-one installer or via `brew`;
 * Windows: using the all-in-one installer.
 
-Clearly, you can also install **aeneas** from source;
-in that case, just keep in mind:
+You can also install **aeneas** from source, just keep in mind:
 
 * if you want to install **aeneas** system-wise,
   you might need `root` or `Administrator` privileges,
   especially if you are using `pip`.
-  On Linux and Mac OS X, you probably can just use `sudo`:
+  On Linux and Mac OS X, probably you can just use `sudo`:
   for example `sudo pip install aeneas` instead of `pip install aeneas`.
   On Windows, you might need to open a console as Administrator;
 * you can install **aeneas** in a virtual environment
-  created by `virtualenv`;
-* **aeneas** provides a few extra tools (e.g., `download` and `plot_waveform`)
+  created by `virtualenv` or similar;
+* **aeneas** provides a few extra tools
+  (e.g., `download` and `plot_waveform`)
   which require extra dependencies.
   These extra tools are not installed by default:
   if you want to install them,
-  use `pip install aeneas[full]` instead of `pip install aeneas`.
+  use `pip install aeneas[full]` instead of `pip install aeneas`;
+* you can disable compiling Python C/C++ extensions by setting one or more
+  of the following environment variables:
+  ``AENEAS_WITH_CDTW=False``,
+  ``AENEAS_WITH_CEW=False``, or
+  ``AENEAS_WITH_CMFCC=False``;
+* you can enable force compiling Python C/C++ extensions by setting one or more
+  of the following environment variables:
+  ``AENEAS_FORCE_CEW=True`` or
+  ``AENEAS_FORCE_CFW=True``.
 
 Below you can find detailed procedures for each operating system.
 
@@ -36,12 +45,12 @@ Below you can find detailed procedures for each operating system.
     containing the C headers (`python-dev` or similar).
 
 2. Install `aeneas` system-wise with `pip`:
-    
+
     ```bash
     $ sudo pip install numpy
     $ sudo pip install aeneas
     ```
-    
+
     **Note**: you must install `numpy` before `aeneas`,
     otherwise the setup process will fail.
 
@@ -87,7 +96,7 @@ you can install all the dependencies by downloading and running
     and you can confidently run **aeneas** in production.
 
 3. In alternative to the previous point, you can install `aeneas` with `pip`:
-    
+
     ```bash
     $ sudo pip install numpy
     $ sudo pip install aeneas
@@ -139,8 +148,15 @@ Feel free to jump to step 3 if you already have `brew` installed in your system.
 4. Install `aeneas`:
 
     ```bash
-    $ brew install homebrew/python/aeneas
+    $ brew install danielbair/tap/aeneas
     ```
+
+    **NOTE** (2017-02-28): apparently the `brew` formula for `aeneas` has been removed
+    from the official `brew` repository
+    (it was installable with `brew install homebrew/python/aeneas`),
+    when the `homebrew-python` repository was deprecated.
+    While we try to upload the formula for `aeneas` back to the official repository,
+    you can use the tap by Daniel Bair to install `aeneas`.
 
 ### Manual Procedure
 
@@ -203,7 +219,7 @@ Feel free to jump to step 9 if you already have
     ```bash
     $ which python
     /usr/local/bin/python
-    
+
     $ python --version
     Python 2.7.10 (or later)
     ```
@@ -223,7 +239,7 @@ Feel free to jump to step 9 if you already have
     and you can confidently run **aeneas** in production.
 
 10. In alternative to the previous point, you can install `aeneas` with `pip`:
-    
+
     ```bash
     $ sudo pip install numpy
     $ sudo pip install aeneas
@@ -275,7 +291,7 @@ that you can download from
 ### Manual Procedure
 
 On Windows it is recommended to run **aeneas**
-with Python 2.7, since compiling the C extensions on Python 3.4 or 3.5
+with Python 2.7, since compiling the C extensions on Python 3.5
 requires [a complex setup process](http://stackoverflow.com/questions/29909330/microsoft-visual-c-compiler-for-python-3-4).
 
 The following guide was kindly provided by Richard Margetts of [SIL International](http://www.sil.org),
@@ -285,12 +301,12 @@ before the all-in-one installer was available (July 2016).
 
 #### Manual Procedure Step 1: Create a parent folder for the installation
 
-Create a parent folder to contain the different programs and modules needed to run **aeneas**:
+Create a parent folder to contain the different programs and packages needed to run **aeneas**:
 
 1. Open Windows Explorer and navigate to the root of the `C:` drive.
 2. Create a new folder and name it `sync`.
 
-You will install the various programs and modules as subfolders of `C:\sync`,
+You will install the various programs and packages as subfolders of `C:\sync`,
 e.g. `C:\sync\eSpeak`, `C:\sync\FFmpeg`, `C:\sync\aeneas-1.5.0.3`, etc.
 
 #### Manual Procedure Step 2: Install eSpeak
@@ -334,7 +350,7 @@ otherwise the modification will not be in effect.)
 1. Go to [http://ffmpeg.zeranoe.com/builds/](http://ffmpeg.zeranoe.com/builds/) .
 2. Download the `Static` version, 64-bit or 32-bit, depending on your system.
    You do not need the `Shared` or `Dev` versions.
-3. Unzip it to a new folder `C:\sync\ffmpeg`. 
+3. Unzip it to a new folder `C:\sync\ffmpeg`.
 4. Add the `C:\sync\ffmpeg\bin` path to your system `PATH` variable, as you did for eSpeak above.
    Do not forget the `bin` part of the path.
    The `bin` sub-folder contains three executables: `ffmpeg.exe`, `ffplay.exe`, and `ffprobe.exe` which are used by aeneas.
@@ -351,7 +367,7 @@ If all is well, you should see some information about the FFmpeg program.
 #### Manual Procedure Step 4: Install Miniconda (Python 2.7.x)
 
 **Python** is the programming language that **aeneas** is written in, popular for writing scientific applications.
-**Miniconda** is a package manager which will make it easier to install Python and the required Python modules.
+**Miniconda** is a package manager which will make it easier to install Python and the required Python packages.
 
 1. Go to [http://conda.pydata.org/miniconda.html](http://conda.pydata.org/miniconda.html) .
 2. Download the Python 2.7.x release of Miniconda for Windows, either 64-bit or 32-bit depending on your system.
@@ -369,12 +385,12 @@ If the Python version displayed is version 3, it means that you already have Pyt
 Uninstall Python 3 if you do not need it.
 Otherwise, edit your system path so that Python 2.7 is found first.
 
-#### Manual Procedure Step 5: Install Python modules
+#### Manual Procedure Step 5: Install Python packages
 
-There are three Python modules required by **aeneas** to run:
+There are three Python packages required by **aeneas** to run:
 `BeautifulSoup4`, `lxml`, and `NumPy`.
 
-To install these modules, open a Windows command prompt and execute the following:
+To install these packages, open a Windows command prompt and execute the following:
 
 ```
 conda install setuptools -y --no-deps
@@ -467,7 +483,7 @@ If all is well, you should get an output similar to the following:
 
 Do not worry if you see warnings about UTF-8 input and output encoding.
 
-If one of the tests fails, it is often because a program or module
+If one of the tests fails, it is often because a program or package
 has not been added correctly to the system path (i.e., Python, eSpeak or FFmpeg).
 
 Congratulations, you completed the installation of **aeneas**!

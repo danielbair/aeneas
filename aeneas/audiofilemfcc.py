@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2017, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module contains the following classes:
 
@@ -15,23 +35,14 @@ from __future__ import print_function
 import numpy
 
 from aeneas.audiofile import AudioFile
+from aeneas.exacttiming import TimeInterval
+from aeneas.exacttiming import TimeValue
 from aeneas.logger import Loggable
 from aeneas.mfcc import MFCC
 from aeneas.runtimeconfiguration import RuntimeConfiguration
-from aeneas.timevalue import TimeValue
 from aeneas.vad import VAD
 import aeneas.globalfunctions as gf
 
-__author__ = "Alberto Pettarin"
-__copyright__ = """
-    Copyright 2012-2013, Alberto Pettarin (www.albertopettarin.it)
-    Copyright 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-    Copyright 2015-2016, Alberto Pettarin (www.albertopettarin.it)
-    """
-__license__ = "GNU AGPL v3"
-__version__ = "1.5.1"
-__email__ = "aeneas@readbeyond.it"
-__status__ = "Production"
 
 class AudioFileMFCC(Loggable):
     """
@@ -76,7 +87,7 @@ class AudioFileMFCC(Loggable):
     to avoid creating temporary data or copying data around.
 
     :param string file_path: the path of the PCM16 mono WAVE file, or ``None``
-    :param bool file_path_is_mono_wave: set to ``True`` if the audio file at ``file_path`` is a PCM16 mono WAVE file
+    :param tuple file_format: the format of the audio file, if known in advance: ``(codec, channels, rate)`` or ``None``
     :param mfcc_matrix: the MFCC matrix to be set, or ``None``
     :type  mfcc_matrix: :class:`numpy.ndarray`
     :param audio_file: an audio file, or ``None``
@@ -95,7 +106,7 @@ class AudioFileMFCC(Loggable):
     def __init__(
             self,
             file_path=None,
-            file_path_is_mono_wave=False,
+            file_format=None,
             mfcc_matrix=None,
             audio_file=None,
             rconf=None,
@@ -121,8 +132,8 @@ class AudioFileMFCC(Loggable):
             if self.audio_file is None:
                 audio_file_was_none = True
                 self.audio_file = AudioFile(
-                    self.file_path,
-                    is_mono_wave=file_path_is_mono_wave,
+                    file_path=self.file_path,
+                    file_format=file_format,
                     rconf=self.rconf,
                     logger=self.logger
                 )
@@ -257,9 +268,10 @@ class AudioFileMFCC(Loggable):
         computed as ``number of samples / sample_rate``,
         hence it might differ than ``len(self.__mfcc) * mfcc_window_shift``.
 
-        :rtype: :class:`~aeneas.timevalue.TimeValue`
+        :rtype: :class:`~aeneas.exacttiming.TimeValue`
         """
         return self.__audio_length
+
     @audio_length.setter
     def audio_length(self, audio_length):
         self.__audio_length = audio_length
@@ -272,6 +284,7 @@ class AudioFileMFCC(Loggable):
         :rtype: bool
         """
         return self.__is_reversed
+
     @is_reversed.setter
     def is_reversed(self, is_reversed):
         self.__is_reversed = is_reversed
@@ -370,20 +383,24 @@ class AudioFileMFCC(Loggable):
 
         :param bool speech: if ``True``, return speech intervals,
                             otherwise return nonspeech intervals
-        :param bool time: if ``True``, return values in seconds (:class:`~aeneas.timevalue.TimeValue`),
-                          otherwise in indices (int)
+        :param bool time: if ``True``, return :class:`~aeneas.exacttiming.TimeInterval` objects,
+                          otherwise return indices (int)
         :rtype: list of pairs (see above)
         """
         self._ensure_mfcc_mask()
         if speech:
-            self.log(u"Converting speech runs to intervals")
+            self.log(u"Converting speech runs to intervals...")
             intervals = self.__speech_intervals
         else:
-            self.log(u"Converting nonspeech runs to intervals")
+            self.log(u"Converting nonspeech runs to intervals...")
             intervals = self.__nonspeech_intervals
         if time:
             mws = self.rconf.mws
-            return [(i[0] * mws, (i[1] + 1) * mws) for i in intervals]
+            intervals = [TimeInterval(
+                begin=(b * mws),
+                end=((e + 1) * mws)
+            ) for b, e in intervals]
+        self.log(u"Converting... done")
         return intervals
 
     def inside_nonspeech(self, index):
@@ -447,7 +464,7 @@ class AudioFileMFCC(Loggable):
         """
         Return the time instant, in seconds, where MIDDLE starts.
 
-        :rtype: :class:`~aeneas.timevalue.TimeValue`
+        :rtype: :class:`~aeneas.exacttiming.TimeValue`
         """
         return TimeValue(self.__middle_begin) * self.rconf.mws
 
@@ -476,7 +493,7 @@ class AudioFileMFCC(Loggable):
         """
         Return the time instant, in seconds, where MIDDLE ends.
 
-        :rtype: :class:`~aeneas.timevalue.TimeValue`
+        :rtype: :class:`~aeneas.exacttiming.TimeValue`
         """
         return TimeValue(self.__middle_end) * self.rconf.mws
 
@@ -564,10 +581,25 @@ class AudioFileMFCC(Loggable):
         self.is_reversed = not self.is_reversed
         self.log(u"Reversing...done")
 
-    def run_vad(self):
+    def run_vad(
+        self,
+        log_energy_threshold=None,
+        min_nonspeech_length=None,
+        extend_before=None,
+        extend_after=None
+    ):
         """
         Determine which frames contain speech and nonspeech,
         and store the resulting boolean mask internally.
+
+        The four parameters might be ``None``:
+        in this case, the corresponding RuntimeConfiguration values
+        are applied.
+
+        :param float log_energy_threshold: the minimum log energy threshold to consider a frame as speech
+        :param int min_nonspeech_length: the minimum length, in frames, of a nonspeech interval
+        :param int extend_before: extend each speech interval by this number of frames to the left (before)
+        :param int extend_after: extend each speech interval by this number of frames to the right (after)
         """
         def _compute_runs(array):
             """
@@ -584,12 +616,18 @@ class AudioFileMFCC(Loggable):
         self.log(u"Creating VAD object")
         vad = VAD(rconf=self.rconf, logger=self.logger)
         self.log(u"Running VAD...")
-        self.__mfcc_mask = vad.run_vad(self.__mfcc[0])
+        self.__mfcc_mask = vad.run_vad(
+            wave_energy=self.__mfcc[0],
+            log_energy_threshold=log_energy_threshold,
+            min_nonspeech_length=min_nonspeech_length,
+            extend_before=extend_before,
+            extend_after=extend_after
+        )
         self.__mfcc_mask_map = (numpy.where(self.__mfcc_mask))[0]
         self.log(u"Running VAD... done")
         self.log(u"Storing speech and nonspeech intervals...")
         # where( == True) already computed, reusing
-        #runs = _compute_runs((numpy.where(self.__mfcc_mask))[0])
+        # COMMENTED runs = _compute_runs((numpy.where(self.__mfcc_mask))[0])
         runs = _compute_runs(self.__mfcc_mask_map)
         self.__speech_intervals = [(r[0], r[-1]) for r in runs]
         # where( == False) not already computed, computing now
@@ -606,13 +644,15 @@ class AudioFileMFCC(Loggable):
         only ``middle_length`` will be applied.
 
         :param head_length: the length of HEAD, in seconds
-        :type  head_length: :class:`~aeneas.timevalue.TimeValue`
+        :type  head_length: :class:`~aeneas.exacttiming.TimeValue`
         :param middle_length: the length of MIDDLE, in seconds
-        :type  middle_length: :class:`~aeneas.timevalue.TimeValue`
+        :type  middle_length: :class:`~aeneas.exacttiming.TimeValue`
         :param tail_length: the length of TAIL, in seconds
-        :type  tail_length: :class:`~aeneas.timevalue.TimeValue`
+        :type  tail_length: :class:`~aeneas.exacttiming.TimeValue`
         :raises: TypeError: if one of the arguments is not ``None``
-                            or :class:`~aeneas.timevalue.TimeValue`
+                            or :class:`~aeneas.exacttiming.TimeValue`
+        :raises: ValueError: if one of the arguments is greater
+                             than the length of the audio file
         """
         for variable, name in [
             (head_length, "head_length"),
@@ -621,6 +661,8 @@ class AudioFileMFCC(Loggable):
         ]:
             if (variable is not None) and (not isinstance(variable, TimeValue)):
                 raise TypeError(u"%s is not None or TimeValue" % name)
+            if (variable is not None) and (variable > self.audio_length):
+                raise ValueError(u"%s is greater than the length of the audio file" % name)
         self.log(u"Setting head middle tail...")
         mws = self.rconf.mws
         self.log([u"Before: 0 %d %d %d", self.middle_begin, self.middle_end, self.all_length])
@@ -632,6 +674,3 @@ class AudioFileMFCC(Loggable):
             self.middle_end = self.all_length - int(tail_length / mws)
         self.log([u"After:  0 %d %d %d", self.middle_begin, self.middle_end, self.all_length])
         self.log(u"Setting head middle tail... done")
-
-
-

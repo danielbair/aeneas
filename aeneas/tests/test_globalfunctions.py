@@ -1,14 +1,35 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2017, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import io
 import os
 import sys
 import unittest
 
-from aeneas.timevalue import TimeValue
+from aeneas.exacttiming import TimeValue
 import aeneas.globalconstants as gc
 import aeneas.globalfunctions as gf
+
 
 class TestGlobalFunctions(unittest.TestCase):
 
@@ -368,16 +389,16 @@ class TestGlobalFunctions(unittest.TestCase):
         tests = [
             (None, TimeValue("0.000")),
             ("", TimeValue("0.000")),
-            ("23:45.678", TimeValue("0.000")), # no 2 ":"
-            ("3:45.678", TimeValue("0.000")), # no 2 ":"
-            ("45.678", TimeValue("0.000")), # no 2 ":"
-            ("5.678", TimeValue("0.000")), # no 2 ":"
-            ("5", TimeValue("0.000")), # no 2 ":"
-            ("00:00:01", TimeValue("0.000")), # no "."
-            ("1:23:45.678", TimeValue("5025.678")), # tolerate this (?)
-            ("1:2:45.678", TimeValue("3765.678")), # tolerate this (?)
-            ("1:23:4.678", TimeValue("4984.678")), # tolerate this (?)
-            ("1:23:4.", TimeValue("4984.000")), # tolerate this (?)
+            ("23:45.678", TimeValue("0.000")),          # no 2 ":"
+            ("3:45.678", TimeValue("0.000")),           # no 2 ":"
+            ("45.678", TimeValue("0.000")),             # no 2 ":"
+            ("5.678", TimeValue("0.000")),              # no 2 ":"
+            ("5", TimeValue("0.000")),                  # no 2 ":"
+            ("00:00:01", TimeValue("0.000")),           # no "."
+            ("1:23:45.678", TimeValue("5025.678")),     # tolerate this (?)
+            ("1:2:45.678", TimeValue("3765.678")),      # tolerate this (?)
+            ("1:23:4.678", TimeValue("4984.678")),      # tolerate this (?)
+            ("1:23:4.", TimeValue("4984.000")),         # tolerate this (?)
             ("00:00:00.000", TimeValue("0.000")),
             ("00:00:12.000", TimeValue("12.000")),
             ("00:00:12.345", TimeValue("12.345")),
@@ -405,10 +426,10 @@ class TestGlobalFunctions(unittest.TestCase):
             (83.456, "00:01:23.456"),
             (3600.000, "01:00:00.000"),
             (3612.000, "01:00:12.000"),
-            (3612.340, "01:00:12.340"), # numerical issues
+            (3612.340, "01:00:12.340"),     # numerical issues
             (4980.000, "01:23:00.000"),
             (5025.000, "01:23:45.000"),
-            (5025.670, "01:23:45.670"), # numerical issues
+            (5025.670, "01:23:45.670"),     # numerical issues
         ]
         for test in tests:
             self.assertEqual(gf.time_to_hhmmssmmm(test[0]), test[1])
@@ -424,10 +445,10 @@ class TestGlobalFunctions(unittest.TestCase):
             (83.456, "00:01:23,456"),
             (3600.000, "01:00:00,000"),
             (3612.000, "01:00:12,000"),
-            (3612.340, "01:00:12,340"), # numerical issues
+            (3612.340, "01:00:12,340"),     # numerical issues
             (4980.000, "01:23:00,000"),
             (5025.000, "01:23:45,000"),
-            (5025.670, "01:23:45,670"), # numerical issues
+            (5025.670, "01:23:45,670"),     # numerical issues
         ]
         for test in tests:
             self.assertEqual(gf.time_to_srt(test[0]), test[1])
@@ -474,7 +495,7 @@ class TestGlobalFunctions(unittest.TestCase):
         gf.can_run_c_extension("bar")
 
     def test_run_c_extension_with_fallback(self):
-        #TODO
+        # TODO
         pass
 
     def test_file_can_be_read_true(self):
@@ -540,6 +561,14 @@ class TestGlobalFunctions(unittest.TestCase):
         self.assertFalse(gf.directory_exists(orig))
         gf.delete_directory(orig)
         self.assertFalse(gf.directory_exists(orig))
+
+    def test_close_file_handler(self):
+        handler, path = gf.tmp_file()
+        self.assertTrue(gf.file_exists(path))
+        gf.close_file_handler(handler)
+        self.assertTrue(gf.file_exists(path))
+        gf.delete_file(handler, path)
+        self.assertFalse(gf.file_exists(path))
 
     def test_delete_file_existing(self):
         handler, path = gf.tmp_file()
@@ -688,8 +717,12 @@ class TestGlobalFunctions(unittest.TestCase):
             (90, u"Z"),
             (0x20, u"\u0020"),
             (0x200, u"\u0200"),
-            (0x2000, u"\u2000")
+            (0x2000, u"\u2000"),
         ]
+        if gf.PY2:
+            tests.append((0x20000, "\\U00020000".decode("unicode-escape")))
+        else:
+            tests.append((0x20000, "\U00020000"))
         for test in tests:
             self.assertEqual(gf.safe_unichr(test[0]), test[1])
 
@@ -719,25 +752,21 @@ class TestGlobalFunctions(unittest.TestCase):
             self.assertEqual(gf.safe_bytes(test[0]), test[1])
 
     def test_safe_unicode_stdin(self):
-        #TODO
+        # TODO
         pass
 
     def test_safe_print(self):
-        #TODO
+        # TODO
         pass
 
     def test_object_to_unicode(self):
-        #TODO
+        # TODO
         pass
 
     def test_object_to_bytes(self):
-        #TODO
+        # TODO
         pass
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-
-

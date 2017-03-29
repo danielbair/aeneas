@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2017, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module contains the following classes:
 
@@ -16,16 +36,6 @@ from aeneas.logger import Loggable
 from aeneas.runtimeconfiguration import RuntimeConfiguration
 import aeneas.globalfunctions as gf
 
-__author__ = "Alberto Pettarin"
-__copyright__ = """
-    Copyright 2012-2013, Alberto Pettarin (www.albertopettarin.it)
-    Copyright 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-    Copyright 2015-2016, Alberto Pettarin (www.albertopettarin.it)
-    """
-__license__ = "GNU AGPL v3"
-__version__ = "1.5.1"
-__email__ = "aeneas@readbeyond.it"
-__status__ = "Production"
 
 class FFMPEGPathError(Exception):
     """
@@ -34,7 +44,6 @@ class FFMPEGPathError(Exception):
     .. versionadded:: 1.4.1
     """
     pass
-
 
 
 class FFMPEGWrapper(Loggable):
@@ -62,6 +71,9 @@ class FFMPEGWrapper(Loggable):
 
     FFMPEG_SAMPLE_44100 = ["-ar", "44100"]
     """ Single parameter for ``ffmpeg``: 44100 Hz sampling """
+
+    FFMPEG_SAMPLE_48000 = ["-ar", "48000"]
+    """ Single parameter for ``ffmpeg``: 48000 Hz sampling """
 
     FFMPEG_MONO = ["-ac", "1"]
     """ Single parameter for ``ffmpeg``: mono (1 channel) """
@@ -125,11 +137,21 @@ class FFMPEGWrapper(Loggable):
     )
     """ Set of parameters for ``ffmpeg`` with 44100 Hz sampling """
 
+    FFMPEG_PARAMETERS_SAMPLE_48000 = (
+        FFMPEG_MONO +
+        FFMPEG_SAMPLE_48000 +
+        FFMPEG_OVERWRITE +
+        FFMPEG_PLAIN_HEADER +
+        FFMPEG_FORMAT_WAVE
+    )
+    """ Set of parameters for ``ffmpeg`` with 48000 Hz sampling """
+
     FFMPEG_PARAMETERS_MAP = {
         8000: FFMPEG_PARAMETERS_SAMPLE_8000,
         16000: FFMPEG_PARAMETERS_SAMPLE_16000,
         22050: FFMPEG_PARAMETERS_SAMPLE_22050,
-        44100: FFMPEG_PARAMETERS_SAMPLE_44100
+        44100: FFMPEG_PARAMETERS_SAMPLE_44100,
+        48000: FFMPEG_PARAMETERS_SAMPLE_48000
     }
     """ Map sample rate to parameter list """
 
@@ -144,7 +166,7 @@ class FFMPEGWrapper(Loggable):
             output_file_path,
             head_length=None,
             process_length=None
-        ):
+    ):
         """
         Convert the audio file at ``input_file_path``
         into ``output_file_path``,
@@ -186,8 +208,8 @@ class FFMPEGWrapper(Loggable):
             arguments.extend(["-ss", head_length])
         if process_length is not None:
             arguments.extend(["-t", process_length])
-        if self.rconf[RuntimeConfiguration.FFMPEG_SAMPLE_RATE] in self.FFMPEG_PARAMETERS_MAP:
-            arguments.extend(self.FFMPEG_PARAMETERS_MAP[self.rconf[RuntimeConfiguration.FFMPEG_SAMPLE_RATE]])
+        if self.rconf.sample_rate in self.FFMPEG_PARAMETERS_MAP:
+            arguments.extend(self.FFMPEG_PARAMETERS_MAP[self.rconf.sample_rate])
         else:
             arguments.extend(self.FFMPEG_PARAMETERS_DEFAULT)
         arguments.append(output_file_path)
@@ -214,6 +236,3 @@ class FFMPEGWrapper(Loggable):
         # returning the output file path
         self.log([u"Returning output file path '%s'", output_file_path])
         return output_file_path
-
-
-

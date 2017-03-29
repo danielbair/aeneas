@@ -1,20 +1,42 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2017, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import numpy
 import unittest
 
 from aeneas.audiofile import AudioFile
 from aeneas.audiofile import AudioFileNotInitializedError
 from aeneas.audiofile import AudioFileUnsupportedFormatError
-from aeneas.timevalue import TimeValue
+from aeneas.exacttiming import TimeValue
 import aeneas.globalfunctions as gf
+
 
 class TestAudioFile(unittest.TestCase):
 
     AUDIO_FILE_WAVE = "res/audioformats/mono.16000.wav"
     AUDIO_FILE_EMPTY = "res/audioformats/p001.empty"
     AUDIO_FILE_NOT_WAVE = "res/audioformats/p001.mp3"
+    AUDIO_FILE_EXACT = "res/audioformats/exact.5600.16000.wav"
     NOT_EXISTING_FILE = "res/audioformats/x/y/z/not_existing.wav"
     FILES = [
         {
@@ -23,7 +45,7 @@ class TestAudioFile(unittest.TestCase):
             "rate": 44100,
             "channels": 2,
             "format": "aac",
-            "length": TimeValue("7.9"), # 7.907558 Estimating duration from bitrate, this may be inaccurate
+            "length": TimeValue("7.9"),     # 7.907558 Estimating duration from bitrate, this may be inaccurate
         },
         {
             "path": "res/audioformats/p001.aiff",
@@ -31,7 +53,7 @@ class TestAudioFile(unittest.TestCase):
             "rate": 44100,
             "channels": 2,
             "format": "pcm_s16be",
-            "length": TimeValue("9.0"), # 8.994989
+            "length": TimeValue("9.0"),     # 8.994989
         },
         {
             "path": "res/audioformats/p001.flac",
@@ -39,7 +61,7 @@ class TestAudioFile(unittest.TestCase):
             "rate": 44100,
             "channels": 2,
             "format": "flac",
-            "length": TimeValue("9.0"), # 8.994989
+            "length": TimeValue("9.0"),     # 8.994989
         },
         {
             "path": "res/audioformats/p001.mp3",
@@ -47,7 +69,7 @@ class TestAudioFile(unittest.TestCase):
             "rate": 44100,
             "channels": 2,
             "format": "mp3",
-            "length": TimeValue("9.0"), # 9.038367
+            "length": TimeValue("9.0"),     # 9.038367
         },
         {
             "path": "res/audioformats/p001.mp4",
@@ -55,7 +77,7 @@ class TestAudioFile(unittest.TestCase):
             "rate": 44100,
             "channels": 2,
             "format": "aac",
-            "length": TimeValue("9.0"), # 9.018209
+            "length": TimeValue("9.0"),     # 9.018209
         },
         {
             "path": "res/audioformats/p001.ogg",
@@ -63,7 +85,7 @@ class TestAudioFile(unittest.TestCase):
             "rate": 44100,
             "channels": 2,
             "format": "vorbis",
-            "length": TimeValue("9.0"), # 8.994989
+            "length": TimeValue("9.0"),     # 8.994989
         },
         {
             "path": "res/audioformats/p001.wav",
@@ -71,7 +93,7 @@ class TestAudioFile(unittest.TestCase):
             "rate": 44100,
             "channels": 2,
             "format": "pcm_s16le",
-            "length": TimeValue("9.0"), # 8.994989
+            "length": TimeValue("9.0"),     # 8.994989
         },
         {
             "path": "res/audioformats/p001.webm",
@@ -79,7 +101,7 @@ class TestAudioFile(unittest.TestCase):
             "rate": 44100,
             "channels": 2,
             "format": "vorbis",
-            "length": TimeValue("9.0"), # 9.0
+            "length": TimeValue("9.0"),     # 9.0
         },
     ]
 
@@ -140,7 +162,12 @@ class TestAudioFile(unittest.TestCase):
     def test_length(self):
         audiofile = self.load(self.AUDIO_FILE_WAVE, rs=True)
         audiofile.clear_data()
-        self.assertAlmostEqual(audiofile.audio_length, TimeValue("53.3"), places=1) # 53.266
+        self.assertAlmostEqual(audiofile.audio_length, TimeValue("53.3"), places=1)     # 53.266
+
+    def test_length_exact(self):
+        audiofile = self.load(self.AUDIO_FILE_EXACT, rs=True)
+        audiofile.clear_data()
+        self.assertAlmostEqual(audiofile.audio_length, TimeValue("5.600"), places=3)     # 5.600
 
     def test_add_samples_file(self):
         audiofile = self.load(self.AUDIO_FILE_WAVE, rs=True)
@@ -185,7 +212,7 @@ class TestAudioFile(unittest.TestCase):
         for interval in intervals:
             audiofile = self.load(self.AUDIO_FILE_WAVE, rs=True)
             audiofile.trim(interval[0], interval[1])
-            self.assertAlmostEqual(audiofile.audio_length, interval[2], places=1) # 53.315918
+            self.assertAlmostEqual(audiofile.audio_length, interval[2], places=1)   # 53.315918
             audiofile.clear_data()
 
     def test_write_not_existing_path(self):
@@ -257,9 +284,5 @@ class TestAudioFile(unittest.TestCase):
         self.assertEqual(audiofile.audio_samples[9], 6)
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-
-

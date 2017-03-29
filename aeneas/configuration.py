@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+# aeneas is a Python/C library and a set of tools
+# to automagically synchronize audio and text (aka forced alignment)
+#
+# Copyright (C) 2012-2013, Alberto Pettarin (www.albertopettarin.it)
+# Copyright (C) 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
+# Copyright (C) 2015-2017, Alberto Pettarin (www.albertopettarin.it)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module contains the following classes:
 
@@ -13,20 +33,13 @@ This module contains the following classes:
 
 from __future__ import absolute_import
 from __future__ import print_function
+from copy import deepcopy
 
+from aeneas.exacttiming import Decimal
+from aeneas.exacttiming import TimeValue
 import aeneas.globalconstants as gc
 import aeneas.globalfunctions as gf
 
-__author__ = "Alberto Pettarin"
-__copyright__ = """
-    Copyright 2012-2013, Alberto Pettarin (www.albertopettarin.it)
-    Copyright 2013-2015, ReadBeyond Srl   (www.readbeyond.it)
-    Copyright 2015-2016, Alberto Pettarin (www.albertopettarin.it)
-    """
-__license__ = "GNU AGPL v3"
-__version__ = "1.5.1"
-__email__ = "aeneas@readbeyond.it"
-__status__ = "Production"
 
 class Configuration(object):
     """
@@ -38,7 +51,7 @@ class Configuration(object):
 
     Values are stored as Unicode strings (or ``None``), and casted
     to the type of the field (``int``, ``float``,
-    ``bool``, :class:`~aeneas.timevalue.TimeValue`, etc.)
+    ``bool``, :class:`~aeneas.exacttiming.TimeValue`, etc.)
     when accessed.
 
     For ``bool`` keys, values listed in
@@ -57,12 +70,12 @@ class Configuration(object):
     FIELDS = [
         #
         # in subclasses, create fields like this:
-        # (field_name, (default_value, conversion_function, [alias1, alias2, ...]))
+        # (field_name, (default_value, conversion_function, [alias1, alias2, ...], human_description))
         #
         # examples:
-        # (gc.FOO, (None, None, ["foo"]))
-        # (gc.BAR, (0.0, float, ["bar", "barrr"]))
-        # (gc.BAZ, (None, TimeValue, ["baz"]))
+        # (gc.FOO, (None, None, ["foo"], u"path to foo"))
+        # (gc.BAR, (0.0, float, ["bar", "barrr"], u"bar threshold"))
+        # (gc.BAZ, (None, TimeValue, ["baz"], u"duration, in seconds, of baz"))
         #
     ]
     """
@@ -86,16 +99,22 @@ class Configuration(object):
         self.data = {}
         self.types = {}
         self.aliases = {}
+        self.desc = {}
         for (field, info) in self.FIELDS:
-            (fdefault, ftype, faliases) = info
+            (fdefault, ftype, faliases, fdesc) = info
             self.data[field] = fdefault
             self.types[field] = ftype
+            self.desc[field] = fdesc
             for alias in faliases:
                 self.aliases[alias] = field
 
         if config_string is not None:
             # strip leading/trailing " or ' characters
-            if (len(config_string) > 0) and (config_string[0] == config_string[-1]) and (config_string[0] in [u"\"", u"'"]):
+            if (
+                (len(config_string) > 0) and
+                (config_string[0] == config_string[-1]) and
+                (config_string[0] in [u"\"", u"'"])
+            ):
                 config_string = config_string[1:-1]
             # populate values from config_string,
             # ignoring keys not present in FIELDS
@@ -136,6 +155,17 @@ class Configuration(object):
                 return self.types[key](value)
         return value
 
+    def clone(self):
+        """
+        Return a deep copy of this configuration object.
+
+        .. versionadded:: 1.7.0
+
+        :rtype: :class:`~aeneas.configuration.Configuration`
+        """
+        return deepcopy(self)
+
+    @property
     def config_string(self):
         """
         Build the storable string corresponding
@@ -147,5 +177,38 @@ class Configuration(object):
             [u"%s%s%s" % (fn, gc.CONFIG_STRING_ASSIGNMENT_SYMBOL, self.data[fn]) for fn in sorted(self.data.keys()) if self.data[fn] is not None]
         )
 
+    @classmethod
+    def parameters(cls, sort=True, as_strings=False):
+        """
+        Return a list of tuples ``(field, description, type, default)``,
+        one for each field of the configuration.
 
+        :param bool sort: if ``True``, return the list sorted by field
+        :param bool as_strings: if ``True``, return formatted strings instead
+        :rtype: list
+        """
+        def cft(ftype, fdefault):
+            """ Convert field type and default value to string """
+            if ftype is None:
+                return u""
+            if ftype in [TimeValue, Decimal, float]:
+                cftype = u"float"
+                cfdefault = u"%.3f" % ftype(fdefault) if fdefault is not None else u"None"
+            elif ftype == int:
+                cftype = u"int"
+                cfdefault = u"%d" % ftype(fdefault) if fdefault is not None else u"None"
+            elif ftype == bool:
+                cftype = u"bool"
+                cfdefault = u"%s" % fdefault if fdefault is not None else u"None"
+            else:
+                cftype = u"unknown"
+                cfdefault = u"%s" % fdefault if fdefault is not None else u"None"
+            return u" (%s, %s)" % (cftype, cfdefault)
 
+        parameters = [(field, fdesc, ftype, fdefault) for (field, (fdefault, ftype, faliases, fdesc)) in cls.FIELDS]
+        if sort:
+            parameters = sorted(parameters)
+        if as_strings:
+            l = max([len(t[0]) for t in parameters])
+            parameters = [u"%s : %s%s" % (f.ljust(l), d, cft(t, df)) for (f, d, t, df) in parameters]
+        return parameters

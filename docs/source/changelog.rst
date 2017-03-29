@@ -1,6 +1,128 @@
 Changelog
 =========
 
+v1.7.3 (2017-03-15)
+-------------------
+
+#. Fixed bug #168 and added a regression test for it
+#. Added option ``-f, --full`` to ``aeneas.tools.read_audio`` and tests for it
+
+v1.7.2 (2017-03-03)
+-------------------
+
+#. Added MacOS TTS Wrapper (courtesy of Chris Vaughn)
+#. Removed dependency from ``pafy``, using ``youtube-dl`` directly (#159)
+#. Added retry mechanism to ``Downloader``, including ``DOWNLOADER_SLEEP`` and ``DOWNLOADER_RETRY_ATTEMPTS`` in ``RuntimeConfiguration``
+#. Fixed bug #160
+#. Fixed a latent bug with arbitrary shifts in aba when using the ``task_adjust_boundary_no_zero`` option
+#. Fixed a latent bug in AWS Polly and Nuance wrappers
+#. Updated copyright strings with 2017
+#. Updated ``INSTALL.md`` to brew install from Daniel Bair's tap instead of official brew repo since they removed the formula for aeneas (#165)
+
+v1.7.1 (2016-12-20)
+-------------------
+
+#. Fix bug #151
+#. Downgraded dependency on lxml to lxml>=3.6.0 to help packaging the Windows installer
+#. Added aeneas version to log
+#. Changed default voice for Festival TTS Wrapper to ``eng-USA`` to help people installing from source on Mac OS X
+
+v1.7.0 (2016-12-07)
+-------------------
+
+#. Moved syncmap I/O functions in ``aeneas.syncmap`` subpackage
+#. Renamed ``aeneas.timevalue`` into ``aeneas.exacttiming``
+#. Renamed ``audio_duration`` into ``length`` in ``SyncMapFragment`` for consistency with ``TimeInterval``
+#. Renamed ``os_task_file_no_zero`` (``PPN_OS_TASK_FILE_NO_ZERO``) to ``task_adjust_boundary_no_zero`` (``PPN_TASK_ADJUST_BOUNDARY_NO_ZERO``) in ``TaskConfiguration``
+#. Renamed ``nuance_tts_api_sleep`` (``NUANCE_TTS_API_SLEEP``) to ``tts_api_sleep`` (``TTS_API_SLEEP``) in ``RuntimeConfiguration``
+#. Renamed ``nuance_tts_api_retry_attempts`` (``NUANCE_TTS_API_RETRY_ATTEMPTS``) to ``tts_api_retry_attempts`` (``TTS_API_RETRY_ATTEMPTS``) in ``RuntimeConfiguration``
+#. Renamed ``--rates`` to ``--rate`` in ``ExecuteTaskCLI``
+#. Renamed ``--example-rates`` to ``--example-rate`` in ``ExecuteTaskCLI``
+#. Changed ``config_string()`` to property in ``aeneas.configuration.Configuration``
+#. Changed the default value of ``TASK_MAX_AUDIO_LENGTH`` to ``0`` (i.e., process audio file with arbitrary audio length)
+#. Added two new output formats: ``TEXTGRID`` (Praat long TextGrid) and ``TEXTGRID_SHORT`` (Praat short TextGrid)
+#. More robust and generic reading of SRT-like files, especially WebVTT
+#. Fixed typos in ``SyncMapFormat`` docstrings
+#. Added ``safety_checks`` parameter to ``RuntimeConfiguration`` that can be disabled to trade safety for speed (issue #117)
+#. Added Makefile files to C/C++ extensions, replacing previous Bash scripts
+#. Simplified ``ExecuteTask``, offloading some sub-tasks to ``SyncMap``, ``SyncMapFragmentList``, and ``AdjustBoundaryAlgorithm``
+#. Simplified ``AdjustBoundaryAlgorithm``
+#. Added method ``sync_map_vleaves`` in ``Task`` for quick access to sync map fragments (vleaves)
+#. Added ``aeneas.exacttiming.TimeInterval`` class to represent time intervals and act upon them
+#. Added tests for ``TimeInterval``
+#. Added ``has_zero_length`` in ``SyncMapFragment``
+#. Added comparison functions to ``SyncMapFragment``, based on ``TimeInterval``
+#. Added ``aeneas.syncmap.fragmentlist.SyncMapFragmentList`` class to represent a list of sync map fragments, sorted and with positional/timing constraints
+#. Added tests for ``SyncMapFragmentList``
+#. Added ``clone()`` method to ``aeneas.configuration.Configuration``
+#. Removed ``clone()`` method to ``aeneas.runtimeconfiguration.RuntimeConfiguration`` (now it inherits from ``Configuration``)
+#. Added ``clone()`` method to ``aeneas.tree.Tree``
+#. Added more tests for ``Tree``
+#. Added ``PPN_TASK_ADJUST_BOUNDARY_NONSPEECH_MIN`` and ``PPN_TASK_ADJUST_BOUNDARY_NONSPEECH_STRING`` to ``TaskConfiguration``
+#. Added ``ABA_NONSPEECH_TOLERANCE`` and ``ABA_NO_ZERO_DURATION`` parameters to ``RuntimeConfiguration``
+#. Added more tests for ``Configuration`` and ``RuntimeConfiguration``
+#. Added map from language code to human-readable name for TTS wrappers and for ``Language``, usable by ``aeneas.tools.execute_task``
+#. Marked Afrikaans (``afr``) language as tested
+#. Added more examples to ``aeneas.tools.execute_task``
+#. Added more tool and long tests
+#. Added bench tests
+#. Added ``wiki/TESTING.md``
+#. Added ``venvs`` directory with scripts to automate testing with virtual environments
+#. Added ``RuntimeConfiguration`` parameters to switch MFCC masking on, including per level in multilevel tasks
+#. Modified ``DTWAligner``, ``AudioFileMFCC``, ``ExecuteTask``, and ``VAD`` to allow MFCC masking
+#. Added field human-readable descriptions in ``Configuration`` and its subclasses
+#. Better ``--list-parameters`` in ``ExecuteTask``
+#. Added ``--list-parameters`` in ``ExecuteJob``
+#. Added ``--help-rconf`` option to all tools
+#. Added check in ``ExecuteTask`` on the consistency of the computed sync map
+#. Added ``RuntimeConfiguration`` parameters ``DTW_MARGIN_L1``, ``DTW_MARGIN_L2``, ``DTW_MARGIN_L3``, to change DTW margin of each level
+#. Added ``FFMPEG_PARAMETERS_SAMPLE_48000`` to ``ffmpegwrapper.py``
+#. Fixes issue with ``gf.relative_path()`` in Windows, if executed from a drive different than the install drive
+#. Fixed a bug with empty fragments when using subprocess TTS with TTS cache enabled
+#. Added ``--presets-word`` switch to ``aeneas.tools.execute_task``
+#. Added ``AWSTTSWrapper`` wrapper for AWS Polly TTS API 
+#. Revised docs
+#. Fixed a bug in reading SMIL files with machine-readable timings
+#. Fixed a bug in ``SyncMapFragmentList`` which caused sync map to contain overlapping fragments
+
+v1.6.0.1 (2016-09-30)
+---------------------
+
+#. Fixes bug in Nuance TTS wrapper
+
+v1.6.0 (2016-09-26)
+-------------------
+
+#. Fixed bug #102 by checking that the audio file produced by the TTS engine is mono WAVE and has correct sample rate: slightly slower but safe
+#. Created ``aeneas.ttswrappers`` subpackage
+#. Renamed ``aeneas.ttswrapper`` to ``aeneas.ttswrappers.basettswrapper``, and ``TTSWrapper`` to ``BaseTTSWrapper``
+#. Renamed ``aeneas.espeakwrapper`` to ``aeneas.ttswrappers.espeakttswrapper``, and ``ESPEAKWrapper`` to ``ESPEAKTTSWrapper``
+#. Renamed ``aeneas.festivalwrapper`` to ``aeneas.ttswrappers.festivalttswrapper``, and ``FESTIVALWrapper`` to ``FESTIVALTTSWrapper``
+#. Renamed ``aeneas.nuancettsapiwrapper`` to ``aeneas.ttswrappers.nuancettswrapper``, and ``NuanceTTSAPIWrapper`` to ``NuanceTTSWrapper``
+#. Modified the value for using the Nuance TTS API from ``nuancettsapi`` to ``nuance`` in ``aeneas.synthesizer.SYNTHESIZER``
+#. Now each TTS wrapper must declare the format (codec, channels, sample rate) of its output
+#. Now each TTS wrapper can declare the default path for the TTS engine executable, using ``DEFAULT_TTS_PATH``
+#. Changed the constructor of ``BaseTTSWrapper`` and derived classes, moving call method flags from constructor parameters to class fields
+#. Added check when synthesizing multiple: at least one fragment should be not empty
+#. Simplified writing custom TTS wrappers by providing the "multiple generic" method in ``BaseTTSWrapper``
+#. Removed ``synthesize_single()`` function in all TTS wrappers and in ``cew``
+#. When working on multilevel sync, user can specify a different TTS for each level
+#. Added an optional TTS caching mechanism to reduce subprocess/API calls to the TTS engine (closes #87)
+#. Added wrapper for eSpeak-ng (subprocess only)
+#. Added ``cfw`` Python C++ Extension to call ``Festival`` via its C++ API, disabled by default (closes #106)
+#. Unified unit tests for eSpeak, eSpeak-ng, and Festival
+#. Python C extension compilation can be disabled/forced in setup.py via env vars
+#. Added check on head/process/tail length which should not exceed the audio file length (closes #80)
+#. Moved package metadata from ``setup.py`` into ``setupmeta.py``
+#. Added AGPL header to all source files
+#. Removed metadata (e.g., version) from all source files, except those directly facing the user
+#. PEP 8 compliance for all Python files (except for E501 "line too long")
+#. Added ``wiki/CONTRIBUTING.md`` explaining the contribution rules (branch policy, code style, etc.)
+#. Using Sphinx theme from readthedocs.org if available
+#. Updated dependencies: BeautifulSoup4>=4.5.1 and lxml>=3.6.4 (see discussion in #93)
+#. Updated documentation
+#. Several other minor code improvements
+
 v1.5.1 (2016-07-25)
 -------------------
 
@@ -222,7 +344,7 @@ v1.1.1 (2015-08-23)
 -------------------
 
 #. Added ``compile_c_extensions.bat`` and directions for Windows users (courtesy of Richard Margetts)
-#. Added warning to ``aeneas.tools.*`` when running without Python C Extensions compiled
+#. Added warning to ``aeneas.tools.*`` when running without Python C extensions compiled
 #. Improved ``README.md``
 
 v1.1.0 (2015-08-21)
