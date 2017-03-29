@@ -119,13 +119,8 @@ def prepare_cew_for_windows_run():
     """
     try:
         # copy espeak_sapi.dll to C:\Windows\System32\espeak.dll
-<<<<<<< HEAD
-        # espeak_dll_dst_path = "aeneas\\cew\\espeak.dll"  # this works too...
-        espeak_dll_dst_path = "C:\\Windows\\System32\\espeak.dll"
-=======
         espeak_dll_win_path = "C:\\Windows\\System32\\espeak.dll"
         espeak_dll_dst_path = "aeneas\\cew\\espeak.dll"
->>>>>>> readbeyond/master
         espeak_dll_src_paths = [
             "C:\\aeneas\\eSpeak\\espeak_sapi.dll",
             "C:\\sync\\eSpeak\\espeak_sapi.dll",
@@ -151,22 +146,12 @@ def prepare_cew_for_windows_run():
             if not found:
                 print("[WARN] Unable to find the eSpeak DLL, probably because you installed eSpeak in a non-standard location.")
                 print("[WARN] If you want to run aeneas with the C extension cew,")
-<<<<<<< HEAD
-                print("[WARN] please copy espeak_sapi.dll from your eSpeak directory into %s" % espeak_dll_dst_path)
-=======
                 print("[WARN] please copy espeak_sapi.dll from your eSpeak directory to %s" % espeak_dll_win_path)
                 # print("[WARN] and run the aeneas setup again.")
->>>>>>> readbeyond/master
                 # return False
             elif not copied:
                 print("[WARN] Unable to copy the eSpeak DLL, probably because you are not running with admin privileges.")
                 print("[WARN] If you want to run aeneas with the C extension cew,")
-<<<<<<< HEAD
-                print("[WARN] please copy espeak_sapi.dll from your eSpeak directory into %s" % espeak_dll_dst_path)
-                # return False
-
-        # Only espeak.lib is necessary to compile aeneas.cew. Yet espeak.dll is necessary at runtime...
-=======
                 print("[WARN] please copy espeak_sapi.dll from your eSpeak directory to %s" % espeak_dll_win_path)
                 # print("[WARN] and run the aeneas setup again.")
                 # return False
@@ -191,7 +176,6 @@ def prepare_cew_for_windows_run():
                 print("[WARN] and run the aeneas setup again.")
                 return False
 
->>>>>>> readbeyond/master
         # if here, we have completed the setup, return True
         return True
     except Exception as e:
@@ -374,14 +358,9 @@ else:
         print("[INFO] If you experience problems, disable cew compilation by specifying")
         print("[INFO] the environment variable AENEAS_WITH_CEW=False .")
         print("[INFO] Please see the aeneas installation documentation for details.")
-<<<<<<< HEAD
-        print("[INFO] *************************************************************************************")
-        if prepare_cew_for_windows_compile():
-=======
         print("[INFO] *****************************************************************")
         print("[INFO] ")
         if prepare_cew_for_windows():
->>>>>>> readbeyond/master
             EXTENSIONS.append(EXTENSION_CEW)
         else:
             print("[WARN] Unable to complete the setup for C extension cew, not building it.")
